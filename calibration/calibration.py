@@ -92,4 +92,8 @@ for i in range(len(objpoints)):
     imgpoints2, _ = cv2.projectPoints(objpoints[i], rvecs[i], tvecs[i], mtx, dist)
     error = cv2.norm(imgpoints[i],imgpoints2, cv2.NORM_L2)/len(imgpoints2)
     tot_error += error
+<<<<<<< HEAD
 print("total error: ", tot_error/len(objpoints))
+=======
+print("total error: ", tot_error/len(objpoints))
+>>>>>>> 21562b8d1427afa698e93deaf83b65ab3c171aa7

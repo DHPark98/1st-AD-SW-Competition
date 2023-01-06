@@ -8,7 +8,11 @@ image_height = 360  # 480   480
 
 # cap = cv2.VideoCapture('/dev/video2')
 # cap = cv2.VideoCapture(2, cv2.CAP_V4L2)   # CAP_DSHOW : Microsoft, CAP_V4L2 : Linux
+<<<<<<< HEAD
 cap = cv2.VideoCapture(4)
+=======
+cap = cv2.VideoCapture(2)
+>>>>>>> 21562b8d1427afa698e93deaf83b65ab3c171aa7
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, image_width)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, image_height)
 print(cv2.__version__) 
