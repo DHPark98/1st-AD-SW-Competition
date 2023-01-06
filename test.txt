@@ -1,3 +1,4 @@
+### test 0106 21:46
 echo "# 1st-AD-SW-Competition" >> README.md
 git init
 git add README.md
