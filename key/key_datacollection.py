@@ -42,11 +42,7 @@ time_prev_read = time.time()
 time_prev_write = time.time()
 
 FPS = 15        ### FPS for Read
-<<<<<<< HEAD
-FWPS = 10      ### FPS for Write
-=======
 FWPS = 0.1      ### FPS for Write
->>>>>>> 21562b8d1427afa698e93deaf83b65ab3c171aa7
 
 image_width = 640
 image_height = 480
@@ -86,17 +82,11 @@ def dir_and_speed(input_key, direction, speed):
         speed = 250
     elif (speed < -250):
         speed = -250
-<<<<<<< HEAD
+
     if(direction < -4):
         direction = -4
     elif (direction > 4):
         direction = 4
-=======
-    if(direction < -7):
-        direction = -7
-    elif (direction > 7):
-        direction = 7
->>>>>>> 21562b8d1427afa698e93deaf83b65ab3c171aa7
 
     return (direction, speed, brk)
 
@@ -107,19 +97,13 @@ def receive_from_Ard():     # Argument : ser ?
         res = ser.readline()
         res = res.decode()[:len(res)-1]     # "angle : 0 straight :0 Read/Map [A0]/[b]: 575 / 31"
         direction_cur = res[-3:]        # read b (= 31)
-<<<<<<< HEAD
         #print('mapped_angle: ', direction_cur)
     #print('------------------')
-=======
-        print('mapped_angle: ', direction_cur)
-    print('------------------')
->>>>>>> 21562b8d1427afa698e93deaf83b65ab3c171aa7
 
     return direction_cur
 
 
 if __name__ == '__main__':
-<<<<<<< HEAD
     cap_f = cv2.VideoCapture(4)    ###
     cap_f.set(cv2.CAP_PROP_BUFFERSIZE, 1)           
     cap_f.set(cv2.CAP_PROP_FRAME_WIDTH, image_width)      # 864
@@ -127,13 +111,6 @@ if __name__ == '__main__':
    
     cap_b = cv2.VideoCapture(2)     ###
     cap_b.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-=======
-    cap_f = cv2.VideoCapture(0)     ###
-    cap_f.set(cv2.CAP_PROP_FRAME_WIDTH, image_width)      # 864
-    cap_f.set(cv2.CAP_PROP_FRAME_HEIGHT, image_height)     # 480
-
-    cap_b = cv2.VideoCapture(2)     ###
->>>>>>> 21562b8d1427afa698e93deaf83b65ab3c171aa7
     cap_b.set(cv2.CAP_PROP_FRAME_WIDTH, image_width)      # 864
     cap_b.set(cv2.CAP_PROP_FRAME_HEIGHT, image_height)     # 480
 
@@ -151,15 +128,10 @@ if __name__ == '__main__':
     time.sleep(2)
 
     while True:
-<<<<<<< HEAD
         retval_f, img_f = cap_f.read()  # left cam
         retval_b, img_b = cap_b.read()  # right cam
         #time_pass_read = time.time() - time_prev_read
-=======
-        retval_h, img_f = cap_f.read()  # left cam
-        retval_b, img_b = cap_b.read()  # right cam
         time_pass_read = time.time() - time_prev_read
->>>>>>> 21562b8d1427afa698e93deaf83b65ab3c171aa7
         time_pass_write = time.time() - time_prev_write
         input_key = 'o'
 
@@ -169,30 +141,20 @@ if __name__ == '__main__':
                 input_key = k
 
         # Communicate with Arduino
-<<<<<<< HEAD
-        #if (time_pass_read > 1./ FPS) :
         if (retval_f is True):
-=======
-        if (time_pass_read > 1./ FPS) :
->>>>>>> 21562b8d1427afa698e93deaf83b65ab3c171aa7
+        # if (time_pass_read > 1./ FPS) :
+
             direction, speed, brk = dir_and_speed(input_key, direction, speed)
             if (brk == 1):
                 break
             message = str(direction) +  ' ' + str(speed) + ' '
             ser.write(message.encode())      
             print(message)
-<<<<<<< HEAD
             #time_prev_read  = time.time()
-=======
-            time_prev_read  = time.time()
->>>>>>> 21562b8d1427afa698e93deaf83b65ab3c171aa7
+
 
             # mapped_besistance from Arduino (rename to direction_cur)
             direction_cur = receive_from_Ard()
-
-<<<<<<< HEAD
-            # img_f = cv2.resize(img_f, (image_width, image_height))
-            # img_b = cv2.resize(img_b, (image_width, image_height))
 
             img_p_f = total_function(img_f, 'front')     # image processed front
             img_p_b = total_function(img_b, 'back')     # image processed back
@@ -206,35 +168,34 @@ if __name__ == '__main__':
         
         
         if ( (time_pass_write > 1./FWPS or input_key == 'c' ) and direction_cur != -100):
-            path_cur = os.path.dirname(os.path.abspath(__file__))
-            path = path_cur + '/data_img/'
-            img_f_title = 'f_' + str(message) + str(uuid.uuid1())
+            path = '/home/skkcar/Desktop/contest/data_img'
+            time_stamp = str(time.time())
+            uuid_cur = str(uuid.uuid1())
+            
+            img_f_title = path + 'f_' + str(message) + time_stamp + uuid_cur
             cv2.imwrite(path+img_f_title+".png", img_f)
-            img_b_title = 'b_' + str(message) + str(uuid.uuid1())
-            cv2.imwrite(path+img_b_title+".png", img_b)
+            
+            img_b_title = path + 'b_' + str(message) + time_stamp + uuid_cur
+            # cv2.imwrite(path+img_b_title+".png", img_b)
+            
             time_prev_write = time.time()
         
-=======
-            img_f = cv2.resize(img_f, (image_width, image_height))
-            img_b = cv2.resize(img_b, (image_width, image_height))
-
             img_p_f = total_function(img_f, 'front')     # image processed front
             img_p_b = total_function(img_f, 'back')     # image processed back
             
-            cv2.imshow('VideoCombined', img_p_f)
-            cv2.imshow('VideoCombined', img_p_b)
+            cv2.imshow('VideoCombined', img_f)
+            cv2.imshow('VideoCombined', img_b)
+            
+            #img_p_f_title = path + 'f_' + str(message) + time_stamp + uuid_cur
+            #cv2.imwrite(path + img_p_f_title + ".png", img_p_f)
+            #img_p_b_title = path + 'f_' + str(message) + time_stamp + uuid_cur
+            #cv2.imwrite(path + img_p_b_title + ".png", img_p_b)
+            
 
             print(img_p_f.shape)
 
-        # Write(Store) Image
-        if ( (time_pass_write > 1./FWPS or input_key == 'c' ) and direction_cur != -100):
-            path_cur = os.path.dirname(os.path.abspath(__file__))
-            path = path_cur + '/data_img/'
-            img_title = str(message) + str(uuid.uuid1())
-            cv2.imwrite(path+img_title+".png", img_p_f)
-            time_prev_write = time.time()
 
->>>>>>> 21562b8d1427afa698e93deaf83b65ab3c171aa7
+
         # Break Loop
         if cv2.waitKey(25) == ord('f') :
             break
@@ -244,8 +205,6 @@ if __name__ == '__main__':
         cap_f.release()
     if cap_b.isOpened():
         cap_b.release()
-<<<<<<< HEAD
+
     cv2.destroyAllWindows()
-=======
-    cv2.destroyAllWindows()
->>>>>>> 21562b8d1427afa698e93deaf83b65ab3c171aa7
+
