@@ -98,19 +98,19 @@ def color_filter(image):
 
 
 def total_function(img, FB):
-    img_undist = calibrate(img)
+    #img_undist = calibrate(img)
     srcmat = which_srcmat(FB)
-    img_warpped, minverse = warpping(img_undist, srcmat)
+    #img_warpped, minverse = warpping(img_undist, srcmat)
     # warpped_roi = cv2.polylines(img_warpped, _shape, True, (0, 0, 255))    
-    
-    img_w_f = color_filter(img_warpped)
-    img_gray = cv2.cvtColor(img_w_f, cv2.COLOR_BGR2GRAY)
-    ret, img_thresh = cv2.threshold(img_gray, 100, 255, cv2.THRESH_BINARY)
+    img_warpped, minverse = warpping(img, srcmat)
+    # img_w_f = color_filter(img_warpped)
+    # img_gray = cv2.cvtColor(img_w_f, cv2.COLOR_BGR2GRAY)
+    # ret, img_thresh = cv2.threshold(img_gray, 100, 255, cv2.THRESH_BINARY)
 
-    cv2.imshow('warp', img_warpped)    ###
-    cv2.imshow('filter', img_w_f)    ###
-    cv2.imshow('gray', img_gray)
-    return img_thresh
+    # cv2.imshow('warp', img_warpped)    ###
+    # cv2.imshow('filter', img_w_f)    ###
+    # cv2.imshow('gray', img_gray)
+    return img_warpped
 
 
 if __name__ == '__main__':

@@ -28,8 +28,8 @@ from bird_eye_utils import *
 
 # Variables
 ser = serial.Serial()
-# ser.port = '/dev/ttyUSB0'      ### 아두이노 우노 (디버그용)
-ser.port = '/dev/ttyACM0'       ### 아두이노 메가
+ser.port = '/dev/ttyUSB0'      ### 아두이노 우노 (디버그용)
+# ser.port = '/dev/ttyACM0'       ### 아두이노 메가
 ser.baudrate = 9600
 
 message = '0 0 '
