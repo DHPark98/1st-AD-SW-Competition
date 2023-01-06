@@ -10,7 +10,7 @@ cap_f = cv2.VideoCapture(0)     ###
 cap_f.set(cv2.CAP_PROP_FRAME_WIDTH, image_width)      # 864
 cap_f.set(cv2.CAP_PROP_FRAME_HEIGHT, image_height)     # 480
 
-cap_b = cv2.VideoCapture(2)     ###
+cap_b = cv2.VideoCapture(4)     ###
 cap_b.set(cv2.CAP_PROP_FRAME_WIDTH, image_width)      # 864
 cap_b.set(cv2.CAP_PROP_FRAME_HEIGHT, image_height)     # 480
 
