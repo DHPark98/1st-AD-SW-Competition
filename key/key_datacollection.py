@@ -131,7 +131,6 @@ if __name__ == '__main__':
         retval_f, img_f = cap_f.read()  # left cam
         retval_b, img_b = cap_b.read()  # right cam
         #time_pass_read = time.time() - time_prev_read
-        time_pass_read = time.time() - time_prev_read
         time_pass_write = time.time() - time_prev_write
         input_key = 'o'
 
@@ -168,7 +167,7 @@ if __name__ == '__main__':
         
         
         if ( (time_pass_write > 1./FWPS or input_key == 'c' ) and direction_cur != -100):
-            path = '/home/skkcar/Desktop/contest/data_img_231007'
+            path = '/home/skkcar/Desktop/contest/data_img/'
             time_stamp = str(time.time())
             uuid_cur = str(uuid.uuid1())
             

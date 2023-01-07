@@ -6,19 +6,11 @@ import os
 from bird_eye_utils import *
 
 image_width = 640   # 640   864   
-<<<<<<< HEAD
 image_height = 480  # 360   480
 
 # cap = cv2.VideoCapture('/dev/video2')
 # cap = cv2.VideoCapture(2, cv2.CAP_V4L2)   # CAP_DSHOW : Microsoft, CAP_V4L2 : Linux
 cap = cv2.VideoCapture(4)
-=======
-image_height = 360  # 480   480
-
-# cap = cv2.VideoCapture('/dev/video2')
-# cap = cv2.VideoCapture(2, cv2.CAP_V4L2)   # CAP_DSHOW : Microsoft, CAP_V4L2 : Linux
-cap = cv2.VideoCapture(0)
->>>>>>> 21562b8d1427afa698e93deaf83b65ab3c171aa7
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, image_width)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, image_height)
 print(cv2.__version__) 
@@ -36,11 +28,7 @@ while img_idx < 30:
     if (ret is True):
         # print(frame.shape)
         cv2.imshow('frame', frame)
-<<<<<<< HEAD
-        frame_p = total_function(frame, 'front')
-=======
         # frame_p = total_function(frame, 'front')
->>>>>>> 21562b8d1427afa698e93deaf83b65ab3c171aa7
         # cv2.imshow('processed', frame_p)
 
         if cv2.waitKey(25) == ord('f') :
