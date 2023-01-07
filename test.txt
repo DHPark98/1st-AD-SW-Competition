@@ -1,8 +1,5 @@
 ### test 0106 21:46
-echo "# 1st-AD-SW-Competition" >> README.md
-git init
-git add README.md
-git commit -m "first commit"
-git branch -M main
-git remote add origin git@github.com:DongHeokPARK/1st-AD-SW-Competition.git
-git push -u origin main
+
+push git add .
+push git commit -m "hhk ?th commit"
+push git push origin master
