@@ -6,7 +6,7 @@ import os
 image_width = 640   # 640   864   
 image_height = 360  # 480   480
 
-cap_f = cv2.VideoCapture(0)     ###
+cap_f = cv2.VideoCapture(2)     ###
 cap_f.set(cv2.CAP_PROP_FRAME_WIDTH, image_width)      # 864
 cap_f.set(cv2.CAP_PROP_FRAME_HEIGHT, image_height)     # 480
 
