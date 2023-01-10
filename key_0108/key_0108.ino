@@ -5,11 +5,11 @@ const int FOWARD_RIGHT_1 = 2;
 const int FOWARD_RIGHT_2 = 3;
 const int FOWARD_LEFT_1 = 4;
 const int FOWARD_LEFT_2 = 5;
-const int POT = A0;
-const int STEERING_SPEED = 255;
+const int POT = A1;
+const int STEERING_SPEED = 128;
 const int FOWARD_SPEED = 255;
 int angle = 0, straight = 0, str_spd = 100, resistance = 0, mapped_resistance = 0;
-
+char aaa = 'q', sss = 'w';
 
 void right(){
   analogWrite(STEERING_1, STEERING_SPEED);
@@ -53,7 +53,7 @@ void hold(){
 
 void setup() {  
   Serial.begin(9600);
-  pinMode(A0, INPUT);
+  pinMode(POT, INPUT);
   pinMode(STEERING_1, OUTPUT);
   pinMode(STEERING_2, OUTPUT);
   pinMode(FOWARD_RIGHT_1, OUTPUT);
@@ -68,9 +68,16 @@ void setup() {
 void loop() {
 
   if (Serial.available()){
-    angle = Serial.parseInt();
-    straight = Serial.parseInt();
-
+    if(Serial.peek() == 'a'){
+      aaa = Serial.read();
+      angle = Serial.parseInt();
+      
+    }
+    if(Serial.peek() == 's'){
+      sss = Serial.read();
+      straight = Serial.parseInt();
+    }
+    if(0){
     if (angle >= 50 || angle <= -50){
       int straight_temp = angle;
       angle = straight;
@@ -82,29 +89,34 @@ void loop() {
       straight = angle;
       angle = angle_temp;
     }
-
+    }
+    if(0){
     Serial.print("straight: "); 
-    Serial.print(straight);
+    Serial.print(sss);
+    Serial.println(straight);
     Serial.print(" angle: ");
+    Serial.print(aaa);
     Serial.print(angle);
-
-    resistance = analogRead(A0);
-    mapped_resistance = map(resistance, 160, 275, -5, 5);
-    Serial.print(" Read/Map [A0]/[b]: ");  
+    }
+    resistance = analogRead(POT);
+    mapped_resistance = map(resistance, 872, 757, -7, 7);
+    
+    if(1){
+    Serial.print(" Read/Map [A1]/[b]: ");  
     Serial.print(resistance);
     Serial.print(" / ");
     Serial.println(mapped_resistance);
-
+    }
     
     if (straight > 0){
-      Serial.println("-----------");
+      //Serial.println("-----------");
       foward(straight);
     }
     else if (straight == 0){
       hold();
     }
     else if (straight < 0){
-      Serial.println("-----------");
+      //Serial.println("-----------");
       reverse(abs(straight));
     }
 
@@ -119,7 +131,7 @@ void loop() {
     }
   }
   else{
-//    resistance = analogRead(A0);
+//    resistance = analogRead(POT);
 //    mapped_resistance = map(resistance, 160, 275, -5, 5);
 //
 //    if (straight > 0){
