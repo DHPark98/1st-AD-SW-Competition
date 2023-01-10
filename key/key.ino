@@ -6,7 +6,7 @@ const int FOWARD_RIGHT_2 = 3;
 const int FOWARD_LEFT_1 = 4;
 const int FOWARD_LEFT_2 = 5;
 const int POT = A0;
-const int STEERING_SPEED = 255;
+const int STEERING_SPEED = 150;
 const int FOWARD_SPEED = 255;
 int angle = 0, straight = 0, str_spd = 100, resistance = 0, mapped_resistance = 0;
 
@@ -83,28 +83,31 @@ void loop() {
       angle = angle_temp;
     }
 
+    if(0){
     Serial.print("straight: "); 
     Serial.print(straight);
     Serial.print(" angle: ");
     Serial.print(angle);
-
+    }
     resistance = analogRead(A0);
-    mapped_resistance = map(resistance, 160, 275, -5, 5);
+    mapped_resistance = map(resistance, 929, 819, -4, 4);
+    
+    if(0){
     Serial.print(" Read/Map [A0]/[b]: ");  
     Serial.print(resistance);
     Serial.print(" / ");
     Serial.println(mapped_resistance);
-
+    }
     
     if (straight > 0){
-      Serial.println("-----------");
+      //Serial.println("-----------");
       foward(straight);
     }
     else if (straight == 0){
       hold();
     }
     else if (straight < 0){
-      Serial.println("-----------");
+      //Serial.println("-----------");
       reverse(abs(straight));
     }
 
