@@ -9,7 +9,7 @@ import numpy as np
 model = torchvision.models.resnet18(pretrained=False)
 model.fc = torch.nn.Linear(512, 15)
 
-model.load_state_dict(torch.load('best_steering_model_0110.pth'))
+model.load_state_dict(torch.load('best_steering_model_0110.pth', "cuda:0"))
 
 device = "cuda"
 model = model.to(device)
@@ -18,8 +18,7 @@ model = model.eval().half()
 mean = torch.Tensor([0.485, 0.456, 0.406]).cuda().half()
 std = torch.Tensor([0.229, 0.224, 0.225]).cuda().half()
 
-def preprocess(image):
-    image = PIL.Image.fromarray((image*255).astype(np.uint8)).convert('RGB')
+def preprocess(imagefromarray((image*255).astype(np.uint8)).convert('RGB')
     image = transforms.functional.to_tensor(image).to(device).half()
     image.sub_(mean[:, None, None]).div_(std[:, None, None])
     return image[None, ...]
@@ -84,7 +83,7 @@ if __name__ == '__main__':
             
             img_p_f = total_function(img_f, 'front')
             
-            direction = model(preprocess(img_p_f)) - 7
+            direction = torch.argmax(model(preprocess(img_p_f))) - 7
             
             message = 'a' + str(direction) +  's' + str(speed)
             ser.write(message.encode())
