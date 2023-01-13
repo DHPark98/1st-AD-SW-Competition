@@ -6,7 +6,7 @@ import torchvision.transforms as transforms
 import glob
 import PIL.Image
 import os
-from utils import get_resistance_value
+from utility import get_resistance_value
 
 
 class RFDataset(torch.utils.data.Dataset):

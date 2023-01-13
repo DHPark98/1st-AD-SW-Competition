@@ -5,20 +5,26 @@ from Networks import model
 import serial
 import time
 import torch
+from yolov5.models.common import DetectMultiBackend
+from yolov5.utils.general import non_max_suppression
 
 class DoWork:
-    def __init__(self, play_name, cam_name, weight_file):
+    def __init__(self, play_name, cam_name, rf_weight_file, detect_weight_file = None):
         self.camera_module = None
         self.play_type = play_name
         self.cam_num = {"FRONT" : 4, "REAR" : 2}
         self.cam_name = cam_name
-        self.weight_file = weight_file
+        self.rf_weight_file = rf_weight_file
+        self.detect_weight_file = detect_weight_file
+        
         self.serial = serial.Serial()
         self.serial.port = '/dev/ttyUSB0'       ### 아두이노 메가
         self.serial.baudrate = 9600
         self.speed = 30
         self.direction = 0
-        self.network = model.ResNet18(weight_file = self.weight_file)
+        self.rf_network = model.ResNet18(weight_file = self.rf_weight_file)
+        self.detect_network = DetectMultiBackend(weights = detect_weight_file, device = "cuda")
+        
     def serial_start(self):
         try:
             self.serial.open()
@@ -54,6 +60,11 @@ class DoWork:
                     message = 'a' + str(self.direction) +  's' + str(self.speed)
                     self.serial.write(message.encode())
                     print("Current Direction is {}".format(self.direction))
+                    
+                    if self.detect_weight_file != None:
+                        pred = self.detect_network(cam_img, )
+                        pred = non_max_suppression(pred, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
+                    
                     cv2.imshow('VideoCombined', cam_img)
                     
                     pass
@@ -68,6 +79,12 @@ class DoWork:
                 break
                 pass
             
+            if cv2.waitKey(25) == ord('f') :
+                end_message = "a0s0"
+                self.serial.write(end_message.encode())
+                self.serial.close()
+                cv2.destroyAllWindows()
+                break
             
             time.sleep((0.00001))
             

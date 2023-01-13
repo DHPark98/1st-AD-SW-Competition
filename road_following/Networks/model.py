@@ -3,7 +3,7 @@ import torch
 
 
 class ResNet18:
-    def __init__(self, num_classes = 15, weight_file = None, device = "cuda"):
+    def __init__(self, num_classes = 15, weight_file = None, device = "cuda:0"):
         self.num_classes = num_classes
         self.weight_file = weight_file
         self.device = device

@@ -3,13 +3,13 @@ import torch.optim as optim
 import torch.nn.functional as F
 import torchvision.models as models
 from Dataset.dataset import RFDataset
-from utils import train_test_split, DatasetLoader
+from utility import train_test_split, DatasetLoader
 
 NUM_EPOCHS = 30
 BEST_MODEL_PATH = 'best_steering_model_0111.pth'
 best_loss = 1e9
 learning_rate = 1e-3
-rfdataset_path = "./0108a"
+rfdataset_path = "/hdd/woonho/autonomous_driving/rfdata/0108a_bev"
     
 dataset = RFDataset(rfdataset_path)
 
@@ -27,6 +27,7 @@ device = "cuda:0" if torch.cuda.is_available() else "cpu"
 model = model.to(device)
 
 print("Model Load Complete!")
+print("Device name : {}".format("("+device+")"))
 print("-------------------------")
 
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
@@ -59,7 +60,7 @@ for epoch in range(NUM_EPOCHS):
         test_loss += float(loss)
     test_loss /= len(test_loader)
     
-    print("Training Loss : {}, Test Loss : {}".format(train_loss, test_loss))
+    print("Epoch : {} // Training Loss : {}, Test Loss : {}".format(epoch, train_loss, test_loss))
     if test_loss < best_loss:
         torch.save(model.state_dict(), BEST_MODEL_PATH)
         best_loss = test_loss
