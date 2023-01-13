@@ -7,6 +7,7 @@ import time
 import torch
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import non_max_suppression
+from utility import roi_cutting
 
 class DoWork:
     def __init__(self, play_name, cam_name, rf_weight_file, detect_weight_file = None):
@@ -55,15 +56,18 @@ class DoWork:
                 else:
                     cam_img = self.camera_module.read()
                     bird_img = bird_convert(cam_img, self.cam_name)
-                    self.direction = torch.argmax(self.network.run(processing.preprocess(bird_img))).item() - 7
+                    roi_img = roi_cutting(bird_img)
+                    
+                    # self.direction = torch.argmax(self.network.run(processing.preprocess(bird_img))).item() - 7 # bird_eye_view
+                    self.direction = torch.argmax(self.network.run(processing.preprocess(roi_img))).item() - 7 # roi_view
                     
                     message = 'a' + str(self.direction) +  's' + str(self.speed)
                     self.serial.write(message.encode())
-                    print("Current Direction is {}".format(self.direction))
+                    print(message)
                     
                     if self.detect_weight_file != None:
                         pred = self.detect_network(cam_img, )
-                        pred = non_max_suppression(pred, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
+                        # pred = non_max_suppression(pred, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
                     
                     cv2.imshow('VideoCombined', cam_img)
                     

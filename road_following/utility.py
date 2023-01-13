@@ -71,3 +71,8 @@ def return_augmented_images(image, style):
         augmented_image = aug_f(image)
         return np.array(augmented_image)
     
+    
+def roi_cutting(image):
+    image = image[100:350]
+    return image
+    

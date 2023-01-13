@@ -6,10 +6,10 @@ from Dataset.dataset import RFDataset
 from utility import train_test_split, DatasetLoader
 
 NUM_EPOCHS = 30
-BEST_MODEL_PATH = 'best_steering_model_0111.pth'
+BEST_MODEL_PATH = 'best_steering_model_0113.pth'
 best_loss = 1e9
 learning_rate = 1e-3
-rfdataset_path = "/hdd/woonho/autonomous_driving/rfdata/0108a_bev"
+rfdataset_path = "/hdd/woonho/autonomous_driving/rfdata/0108a_roi_bev"
     
 dataset = RFDataset(rfdataset_path)
 
