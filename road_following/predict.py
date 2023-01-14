@@ -11,7 +11,7 @@ weight_file = "best_steering_model_0110.pth"
 
 img_list = os.listdir(test_file_dir_path)
 list_size = len(img_list)
-device = "cuda:0"
+
 model = ResNet18(weight_file=weight_file)
 
 answer_cnt = 0

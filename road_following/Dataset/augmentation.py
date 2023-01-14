@@ -8,14 +8,14 @@ import sys
 sys.path.append("/home/woonho/python/autonomous_driving/road_following")
 from utility import return_augmented_images
 
-num_augmented_images = 10000
+num_augmented_images = 35000
 
-file_path = "/hdd/woonho/autonomous_driving/rfdata/0108a_bev/"
+file_path = "/hdd/woonho/autonomous_driving/rfdata/0113/"
 file_names = os.listdir(file_path)
 total_origin_image_num = len(file_names)
 augment_cnt = 1
 
-new_dir_path = "/hdd/woonho/autonomous_driving/rfdata/0108a_bev/"
+new_dir_path = "/hdd/woonho/autonomous_driving/rfdata/0113_aug/"
 try:
     if not os.path.exists(new_dir_path):
         os.mkdir(new_dir_path)    

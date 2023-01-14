@@ -58,8 +58,8 @@ class DoWork:
                     bird_img = bird_convert(cam_img, self.cam_name)
                     roi_img = roi_cutting(bird_img)
                     
-                    # self.direction = torch.argmax(self.network.run(processing.preprocess(bird_img))).item() - 7 # bird_eye_view
-                    self.direction = torch.argmax(self.network.run(processing.preprocess(roi_img))).item() - 7 # roi_view
+                    self.direction = torch.argmax(self.rf_network.run(processing.preprocess(bird_img))).item() - 7 # bird_eye_view
+                    # self.direction = torch.argmax(self.rf_network.run(processing.preprocess(roi_img))).item() - 7 # roi_view
                     
                     message = 'a' + str(self.direction) +  's' + str(self.speed)
                     self.serial.write(message.encode())
