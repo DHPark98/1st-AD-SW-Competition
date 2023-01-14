@@ -85,7 +85,13 @@ def receive_from_Ard():     # Argument : ser ?
 if __name__ == '__main__':
 
     
-    path = '/home/skkcar/Desktop/contest/data_img/0108a/'     ###
+    path = '/home/skkcar/Desktop/contest/data_img/0113a/'     ###
+
+    try:
+        if not os.path.exists(path):
+            os.mkdir(path)    
+    except OSError:
+        print('Error: Creating dirctory. ' + path)
 
     # Variables
     ser = serial.Serial()
@@ -179,8 +185,8 @@ if __name__ == '__main__':
             time_stamp = str(time.time())
             uuid_cur = str(uuid.uuid1())
             
-            img_f_title = "{0}f--{1}--{2}--{3}".format(path, str(message), time_stamp, uuid_cur)
-            cv2.imwrite(img_f_title+".png", img_f)
+            # img_f_title = "{0}f--{1}--{2}--{3}".format(path, str(message), time_stamp, uuid_cur)
+            # cv2.imwrite(img_f_title+".png", img_f)
             
             #img_b_title = "{0}b--{1}--{2}--{3}".format(path, str(message), time_stamp, uuid_cur)
             # cv2.imwrite(path+img_b_title+".png", img_b)
