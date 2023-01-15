@@ -6,7 +6,7 @@ import time
 import torch
 import torchvision.transforms as transform
 import sys
-# sys.path.append("/home/woonho/python/1st-AD-SW-Competition/road_following/yolov5")
+sys.path.append(os.path.join(os.path.abspath(__file__), "yolov5"))
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import non_max_suppression
 from utility import roi_cutting, preprocess
