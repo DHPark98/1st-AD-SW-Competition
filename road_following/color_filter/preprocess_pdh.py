@@ -13,6 +13,7 @@ def color_filter(image):
     HSV_frame = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     H,S,V = cv2.split(HSV_frame)
     
+   
     # green
     H_green_condition = (30<H) & (H<80)
     V_green_condition = V>100
@@ -20,12 +21,17 @@ def color_filter(image):
     H[green_condition] = 50
     S[green_condition] = 100
     V[green_condition] = 100
-    
     # white
     V_white_condition = V>150
+    H[V_white_condition] = 0
     S[V_white_condition] = 0
     V[V_white_condition] = 255
-    
+    # black -> blue (road)
+    road_condition = True^ (green_condition | V_white_condition)
+    H[road_condition] = 120
+    S[road_condition] = 150
+    V[road_condition] = 150
+ 
     HSV_frame[:,:,0] = H
     HSV_frame[:,:,1] = S
     HSV_frame[:,:,2] = V
@@ -69,14 +75,15 @@ def only_stadium(image):    # 경기장 밖 지우는 함수
     top_green_x = -1
 
     # 이미지 하단에 초록색 픽셀 있는지 확인
-    for x in [544, 540]:
-        # print([479, x])   # 왜 S는 100 + 2인지 확인
-        H_condition = (30 < H[479, x]) & (H[479, x]<80)     # 조건 1: 해당 픽셀의 Hue가 초록색 범위
-        S_condition = S[479, x]==100+2                      # 조건 2: 해당 픽셀의 Saturation이 100임
-        V_condition = V[479, x]==100                      # 조건 3: 해당 픽셀의 Value가 100임
-        if H_condition and S_condition and V_condition:
-            bottom_green_x = x
-            break
+    if(0):
+        for x in [544, 540]:
+            # print([479, x])   # 왜 S는 100 + 2인지 확인
+            H_condition = (30 < H[479, x]) & (H[479, x]<80)     # 조건 1: 해당 픽셀의 Hue가 초록색 범위
+            S_condition = S[479, x]==100+2                      # 조건 2: 해당 픽셀의 Saturation이 100임
+            V_condition = V[479, x]==100                      # 조건 3: 해당 픽셀의 Value가 100임
+            if H_condition and S_condition and V_condition:
+                bottom_green_x = x
+                break
 
     # 이미지 상단에 초록색 픽셀 있는지 확인
     
@@ -140,20 +147,27 @@ def only_stadium(image):    # 경기장 밖 지우는 함수
     return frame_stadium
 
 
-def total_function(image):    
-    image_filtered = color_filter(image)
+def total_function(image):
+    image_blured = cv2.GaussianBlur(image, (0,0), 5)
+    image_filtered = color_filter(image_blured)
+    #image_filtered = color_filter(image)
     image_no_black = remove_black(image_filtered)
     image_stadium = only_stadium(image_no_black)
     image_gray = cv2.cvtColor(image_stadium, cv2.COLOR_BGR2GRAY)
     
     #ret, thresh = cv2.threshold(image_gray, 20, 255, cv2.THRESH_BINARY) # thresh : 160
-    
     # cv2.imshow("filtered", image_filtered)
     # cv2.imshow("no black", image_no_black)
-    cv2.imshow("stadium", image_stadium)
+    # cv2.imshow("stadium", image_stadium)
     # cv2.imshow("gray", image_gray)
     
     #cv2.imshow("test2", thresh)
-    return image_gray
+
+    image_edge = cv2.Canny(image_gray, 110,180)
+
+    # cv2.imshow('edge', image_edge) 
+
+
+    return image_stadium
 
 
