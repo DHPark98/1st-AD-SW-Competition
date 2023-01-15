@@ -9,11 +9,11 @@ from preprocess_pdh import *
 
 
 #imgs = glob.glob("./img/*.png")
-imgs = glob.glob("../../data_img/0114/*.png")
+imgs = glob.glob("../../../data_img/0114/*.png")
 for inum ,iname in enumerate(imgs):
     while True:
         img = cv2.imread(iname, 1)
-        img_gray = total_function(img)
+        img_statdium = total_function(img)
         cv2.imshow('original'+str(inum), img)
 
         

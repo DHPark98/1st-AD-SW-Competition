@@ -6,7 +6,7 @@ import time
 import torch
 import torchvision.transforms as transform
 import sys
-# sys.path.append("/home/woonho/python/1st-AD-SW-Competition/road_following/yolov5")
+sys.path.append("/home/skkcar/Desktop/contest/1st-AD-SW-Competition_0114/road_following/yolov5")
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import non_max_suppression
 from utility import roi_cutting, preprocess
@@ -27,7 +27,7 @@ class DoWork:
         self.speed = 30
         self.direction = 0
         self.rf_network = model.ResNet18(weight_file = self.rf_weight_file)
-        self.detect_network = DetectMultiBackend(weights = detect_weight_file, device = "cuda")
+        self.detect_network = DetectMultiBackend(weights = detect_weight_file)
         self.labels_to_names = {1 : "Green", 2 : "Red", 0 : "Crosswalk"}
         
     def serial_start(self):
