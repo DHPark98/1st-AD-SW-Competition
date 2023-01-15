@@ -148,7 +148,7 @@ def dominant_gradient(image):
     #ppp = True 
     ppp = False
     
-    prev = time.time()
+    # prev = time.time()
     if(not ppp):
 
         lines = cv2.HoughLines(img_edge,1,np.pi/180,50)
@@ -174,7 +174,9 @@ def dominant_gradient(image):
                 if(theta < 1.87 and theta > 1.27):
                     continue
                 else:
-                    angles.append(theta)
+                    angle = np.arctan((x2-x1)/(y1-y2))*180/np.pi
+                    angles.append(angle)
+                
                 #if ( (x2 != x1) and (np.abs((y2-y1)/(x2-x1))<0.3)):
                 #    print(theta)
                 #    continue
@@ -197,7 +199,7 @@ def dominant_gradient(image):
     
     #lane = lane_detect(image)
     
-    after = time.time()
+    # after = time.time()
     #print(after - prev)
     return res
     #return lane 
