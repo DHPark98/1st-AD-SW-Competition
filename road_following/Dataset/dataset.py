@@ -23,6 +23,6 @@ class RFDataset(torch.utils.data.Dataset):
         # image = processing(image)
         tensor_image = preprocess(image, mode="train")
         
-        # return tensor_image, F.one_hot(torch.tensor(res_value), num_classes=15) # classification
-        return tensor_image, torch.tensor(res_value, dtype=torch.float32)# regression
+        return tensor_image, F.one_hot(torch.tensor(res_value), num_classes=15) # classification
+        # return tensor_image, torch.tensor(res_value, dtype=torch.float32)# regression
     
