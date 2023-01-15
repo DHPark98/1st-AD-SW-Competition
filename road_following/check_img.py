@@ -10,12 +10,11 @@ from preprocess_pdh import *
 
 #imgs = glob.glob("./img/*.png")
 imgs = glob.glob("../../data_img/0114/*.png")
-for iname in imgs:
+for inum ,iname in enumerate(imgs):
     while True:
         img = cv2.imread(iname, 1)
         img_gray = total_function(img)
-
-        cv2.imshow('original', img)
+        cv2.imshow('original'+str(inum), img)
 
         
         if cv2.waitKey(1) & 0xFF == ord('f'):
