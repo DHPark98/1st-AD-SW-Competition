@@ -142,7 +142,7 @@ def dominant_gradient(image):
 
     #cv2.imshow('gray', img_gray)
     #cv2.imshow('blur', img_blur)
-    cv2.imshow('edge', img_edge)
+    # cv2.imshow('edge', img_edge)
     
 
     #ppp = True 
