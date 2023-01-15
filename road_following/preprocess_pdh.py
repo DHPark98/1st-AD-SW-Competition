@@ -85,19 +85,29 @@ def only_stadium(image):    # 경기장 밖 지우는 함수
     H_satisfied = (30 < H) & (H<80)
     S_satisfied = S==100+2
     V_satisfied = V==100
-    satisfied = H_satisfied & S_satisfied & V_satisfied 
-
-    print(len(np.where(satisfied)[1]))
-    #print(satisfied)
+    satisfied = H_satisfied & S_satisfied & V_satisfied
+    check_top_green = len(np.where(satisfied[0])[0])
+    check_top_green
+    first_green_x = np.argmax(satisfied, axis = 1).reshape(480, 1)
+    
+    x = np.linspace(0,639,640)
+    y = np.linspace(0,479,480)
+    X,Y = np.meshgrid(x,y)
+    if check_top_green == 0:    # 제일 상단 row에 초록색 없음
+        green_area = (X > first_green_x) & (first_green_x != 0)
+    else:    # 제일 상단 row에 초록색 있음
+        green_area = (X > first_green_x)
+        
+    HSV_frame[green_area] = [50, 100, 100]
     
     white_scene = np.ones((480,640))
-    cv2.imshow("satisfied", white_scene*satisfied)
+    #cv2.imshow("satisfied", white_scene)
     #---------------------------------------------------------------------------------------------
 
-
+    '''
+    # 이미지 상단에 초록색 픽셀 있는지 확인
+    up_start_time = time.time()
     for x in range(620, 20, -25):
-        
-
         H_condition = (30 < H[0, x]) & (H[0, x] < 80)     # 조건 1: 해당 픽셀의 Hue가 초록색 범위
         S_condition = S[0, x]==100+2                      # 조건 2: 해당 픽셀의 Saturation이 100임
         V_condition = V[0, x]==100                      # 조건 3: 해당 픽셀의 Value가 100임
@@ -124,6 +134,7 @@ def only_stadium(image):    # 경기장 밖 지우는 함수
         HSV_frame[:,:,0] = H
         HSV_frame[:,:,1] = S
         HSV_frame[:,:,2] = V
+    '''
     
     frame_stadium = cv2.cvtColor(HSV_frame, cv2.COLOR_HSV2BGR)
     return frame_stadium
