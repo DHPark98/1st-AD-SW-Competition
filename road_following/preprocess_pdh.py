@@ -1,0 +1,148 @@
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+import time
+
+image_width = 640
+image_height = 480
+direction_div = 12
+
+
+
+def color_filter(image):
+    HSV_frame = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    H,S,V = cv2.split(HSV_frame)
+    
+    # green
+    H_green_condition = (30<H) & (H<80)
+    V_green_condition = V>100
+    green_condition = H_green_condition & V_green_condition
+    H[green_condition] = 50
+    S[green_condition] = 100
+    V[green_condition] = 100
+    
+    # white
+    V_white_condition = V>150
+    S[V_white_condition] = 0
+    V[V_white_condition] = 255
+    
+    HSV_frame[:,:,0] = H
+    HSV_frame[:,:,1] = S
+    HSV_frame[:,:,2] = V
+    frame_filtered = cv2.cvtColor(HSV_frame, cv2.COLOR_HSV2BGR)
+    
+    return frame_filtered
+
+def remove_black(image):
+    x = np.linspace(0,639,640)
+    y = np.linspace(0,479,480)
+    X,Y = np.meshgrid(x,y)
+
+    left_bottom = -123*X + 69*Y - 69*354
+    left_bottom = left_bottom>0
+    right_bottom = 173*(X-639) + 93*Y - 93*304
+    right_bottom = right_bottom>0
+
+    B, G, R = cv2.split(image)
+    left_color = image[479, 70]
+    right_color = image[479, 545]
+
+    B[left_bottom] = left_color[0]
+    G[left_bottom] = left_color[1]
+    R[left_bottom] = left_color[2]
+
+    B[right_bottom] = right_color[0]
+    G[right_bottom] = right_color[1]
+    R[right_bottom] = right_color[2]
+
+    image[:,:,0] = B
+    image[:,:,1] = G
+    image[:,:,2] = R
+
+    return image
+
+def only_stadium(image):    # 경기장 밖 지우는 함수
+    HSV_frame = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    H,S,V = cv2.split(HSV_frame)
+
+    bottom_green_x = -1
+    top_green_x = -1
+
+    # 이미지 하단에 초록색 픽셀 있는지 확인
+    for x in [544, 540]:
+        # print([479, x])   # 왜 S는 100 + 2인지 확인
+        H_condition = (30 < H[479, x]) & (H[479, x]<80)     # 조건 1: 해당 픽셀의 Hue가 초록색 범위
+        S_condition = S[479, x]==100+2                      # 조건 2: 해당 픽셀의 Saturation이 100임
+        V_condition = V[479, x]==100                      # 조건 3: 해당 픽셀의 Value가 100임
+        if H_condition and S_condition and V_condition:
+            bottom_green_x = x
+            break
+
+    # 이미지 상단에 초록색 픽셀 있는지 확인
+    
+    #HHK CODE-------------------------------------------------------------------------------------
+    up_start_time = time.time()
+    H_satisfied = (30 < H) & (H<80)
+    S_satisfied = S==100+2
+    V_satisfied = V==100
+    satisfied = H_satisfied & S_satisfied & V_satisfied 
+
+    print(len(np.where(satisfied)[1]))
+    #print(satisfied)
+    
+    white_scene = np.ones((480,640))
+    cv2.imshow("satisfied", white_scene*satisfied)
+    #---------------------------------------------------------------------------------------------
+
+
+    for x in range(620, 20, -25):
+        
+
+        H_condition = (30 < H[0, x]) & (H[0, x] < 80)     # 조건 1: 해당 픽셀의 Hue가 초록색 범위
+        S_condition = S[0, x]==100+2                      # 조건 2: 해당 픽셀의 Saturation이 100임
+        V_condition = V[0, x]==100                      # 조건 3: 해당 픽셀의 Value가 100임
+        if H_condition and S_condition and V_condition:   
+            top_green_x = x
+            break
+    up_finish_time = time.time()
+    print(up_finish_time-up_start_time)
+    print(bottom_green_x, top_green_x)
+
+    # 이미지 하단, 상단 모두에 초록색 픽셀이 있는 경우
+    if (bottom_green_x != -1) and (top_green_x != -1):
+        x = np.linspace(0,639,640)
+        y = np.linspace(0,479,480)
+        X,Y = np.meshgrid(x,y)
+
+        green_boundary = -479*(X- top_green_x + 2) + (bottom_green_x-top_green_x)*Y
+        green_boundary = green_boundary<0
+
+        H[green_boundary] = 50
+        S[green_boundary] = 100
+        V[green_boundary] = 100
+        
+        HSV_frame[:,:,0] = H
+        HSV_frame[:,:,1] = S
+        HSV_frame[:,:,2] = V
+    
+    frame_stadium = cv2.cvtColor(HSV_frame, cv2.COLOR_HSV2BGR)
+    return frame_stadium
+
+
+def total_function(image):    
+    image_filtered = color_filter(image)
+    image_no_black = remove_black(image_filtered)
+    image_stadium = only_stadium(image_no_black)
+    image_gray = cv2.cvtColor(image_stadium, cv2.COLOR_BGR2GRAY)
+    
+    #ret, thresh = cv2.threshold(image_gray, 20, 255, cv2.THRESH_BINARY) # thresh : 160
+    
+    # cv2.imshow("filtered", image_filtered)
+    # cv2.imshow("no black", image_no_black)
+    cv2.imshow("stadium", image_stadium)
+    # cv2.imshow("gray", image_gray)
+    
+    #cv2.imshow("test2", thresh)
+    return image_gray
+
+
