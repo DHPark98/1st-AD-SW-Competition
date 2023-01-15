@@ -15,9 +15,10 @@ def color_filter(image):
     
    
     # green
-    H_green_condition = (30<H) & (H<80)
+    H_green_condition = (40<H) & (H<80)
+    S_green_condition = (S>30)
     V_green_condition = V>100
-    green_condition = H_green_condition & V_green_condition
+    green_condition = H_green_condition & S_green_condition & V_green_condition
     H[green_condition] = 50
     S[green_condition] = 100
     V[green_condition] = 100
@@ -146,17 +147,43 @@ def only_stadium(image):    # 경기장 밖 지우는 함수
     frame_stadium = cv2.cvtColor(HSV_frame, cv2.COLOR_HSV2BGR)
     return frame_stadium
 
+def hide_car_head(image):
+    HSV_frame = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    H,S,V = cv2.split(HSV_frame)
+
+
+
+    x = np.linspace(0,639,640)
+    y = np.linspace(0,479,480)
+    X,Y = np.meshgrid(x,y)
+    
+    a = 132
+    b = 50
+    elipse_eq = b*b*(X-320)*(X-320) + a*a*(Y-479)*(Y-479) < a*a*b*b
+ 
+    H[elipse_eq] = 120
+    S[elipse_eq] = 150
+    V[elipse_eq] = 150
+    
+    HSV_frame[:,:,0] = H
+    HSV_frame[:,:,1] = S
+    HSV_frame[:,:,2] = V
+    car_hidden_img = cv2.cvtColor(HSV_frame, cv2.COLOR_HSV2BGR)
+    
+    return car_hidden_img
+
 
 def total_function(image):
-    image_blured = cv2.GaussianBlur(image, (0,0), 5)
+    image_blured = cv2.GaussianBlur(image, (0,0), 3)
     image_filtered = color_filter(image_blured)
     #image_filtered = color_filter(image)
     image_no_black = remove_black(image_filtered)
     image_stadium = only_stadium(image_no_black)
-    image_gray = cv2.cvtColor(image_stadium, cv2.COLOR_BGR2GRAY)
+    car_hidden = hide_car_head(image_stadium)
+    image_gray = cv2.cvtColor(car_hidden, cv2.COLOR_BGR2GRAY)
     
     #ret, thresh = cv2.threshold(image_gray, 20, 255, cv2.THRESH_BINARY) # thresh : 160
-    # cv2.imshow("filtered", image_filtered)
+    cv2.imshow("blured", image_blured)
     # cv2.imshow("no black", image_no_black)
     cv2.imshow("stadium", image_stadium)
     # cv2.imshow("gray", image_gray)
@@ -168,6 +195,6 @@ def total_function(image):
     cv2.imshow('edge', image_edge) 
 
 
-    return image_stadium
+    return car_hidden 
 
 

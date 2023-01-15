@@ -12,7 +12,7 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from utility import dominant_gradient
 
 #imgs = glob.glob("./img/*.png")
-imgs = glob.glob("../../../data_img/0114/*.png")
+imgs = glob.glob("../../../data_img/0115/*.png")
 for inum ,iname in enumerate(imgs):
     while True:
         img = cv2.imread(iname, 1)
