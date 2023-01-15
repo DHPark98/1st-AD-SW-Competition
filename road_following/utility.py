@@ -106,10 +106,26 @@ def show_bounding_box(image, pred):
     return image
 
 def object_detection(pred):
+    pred_array = [False, False, False, False] # 0:Crosswalk, 1:Green, 2:Red, 3:Car
+    bbox_threshold = [0, 0, 0, 0]
+    
     for *box, cf, cls in pred:
         p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
         bbox_area = (p2[0] - p1[0]) * (p2[1] - p1[1])
         
+        if bbox_area > bbox_threshold[cls] : # find object
+            pred_array[cls] = True
+    
+    if pred_array[0] and pred_array[2]: # stop
+        return 0
+    
+    elif pred_array[0] and pred_array[1]: # go
+        return 1
+    elif pred_array[3]: # 차선 변경
+        return 2
+    else:
+        return 1
+
             
             
             

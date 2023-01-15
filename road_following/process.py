@@ -66,6 +66,8 @@ class DoWork:
                     
                     draw_img = cam_img.copy()
                     
+                    order_flag = 1
+                    
                     if self.detect_weight_file != None:
                         image = transform.functional.to_tensor(cam_img)
                         image = image[None, ...]
@@ -73,8 +75,9 @@ class DoWork:
                         pred = non_max_suppression(pred)[0]
                         
                         draw_img = show_bounding_box(draw_img)
-
-                        # object_detection(pred)
+                        
+                        # order_flag = object_detection(pred)
+                        
                     
                     self.direction = torch.argmax(self.rf_network.run(preprocess(bird_img, mode = "test"))).item() - 7 # bird_eye_view
                     # self.direction = torch.argmax(self.rf_network.run(preprocess(roi_img, mode = "test"))).item() - 7 # roi_view
