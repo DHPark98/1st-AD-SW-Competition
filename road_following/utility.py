@@ -7,7 +7,7 @@ import cv2
 import random
 import numpy as np
 from outdoor_lane_detection import *
-
+import time
 
 
 def get_resistance_value(file):
@@ -92,6 +92,28 @@ def preprocess(image, mode, device = "cuda"):
         image = image[None, ...]
         return image.half()
 
+def show_bounding_box(image, pred):
+    labels_to_names = {0 : "Crosswalk", 1 : "Green", 2 : "Red", 3 : "Car"}
+    
+    for *box, cf, cls in pred:
+        cf = cf.item()
+        cls = cls.item()
+        p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
+        caption = "{}: {:.4f}".format(labels_to_names[cls], cf)
+        cv2.rectangle(image, p1, p2, color = (0, 255, 0), thickness = 2)
+        cv2.putText(image, caption, (p1[0], p1[1] - 2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), thickness = 1)
+    
+    return image
+
+def object_detection(pred):
+    for *box, cf, cls in pred:
+        p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
+        bbox_area = (p2[0] - p1[0]) * (p2[1] - p1[1])
+        
+            
+            
+            
+    
 
 def dominant_gradient(image):
 
@@ -110,13 +132,17 @@ def dominant_gradient(image):
     #ppp = True 
     ppp = False
     
-
+    prev = time.time()
     if(not ppp):
 
         lines = cv2.HoughLines(img_edge,1,np.pi/180,50)
-
+        angles = []
         for i in range(len(lines)):
             for rho, theta in lines[i]:
+                print('theta: ', end = '')
+                print(theta)
+                print('slope: ', end = '')
+
                 a = np.cos(theta)
                 b = np.sin(theta)
                 x0 = a*rho
@@ -125,14 +151,27 @@ def dominant_gradient(image):
                 y1 = int(y0+1000*(a))
                 x2 = int(x0 - 1000*(-b))
                 y2 = int(y0 -1000*(a))
-
+                #if(x1==x2):
+                #    print('inf')
+                #else:
+                #    print((y2-y1)/(x2-x1))
+                if(theta < 1.87 and theta > 1.27):
+                    continue
+                else:
+                    angles.append(theta)
+                #if ( (x2 != x1) and (np.abs((y2-y1)/(x2-x1))<0.3)):
+                #    print(theta)
+                #    continue
                 cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
-
+        print(angles)
         res = np.vstack((image_original,image))
     if(ppp):
         minLineLength = 100
         maxLineGap = 0
         lines = cv2.HoughLinesP(img_edge,1,np.pi/360,100,minLineLength,maxLineGap)
+        if((lines) == None):
+                res = image.copy()
+                return res
         for i in range(len(lines)):
             for x1,y1,x2,y2 in lines[i]:
                 cv2.line(image,(x1,y1),(x2,y2),(0,0,255),3)
@@ -142,7 +181,8 @@ def dominant_gradient(image):
     
     #lane = lane_detect(image)
     
-
+    after = time.time()
+    #print(after - prev)
     return res
     #return lane 
     #return img_edge

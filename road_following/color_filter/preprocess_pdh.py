@@ -75,14 +75,15 @@ def only_stadium(image):    # 경기장 밖 지우는 함수
     top_green_x = -1
 
     # 이미지 하단에 초록색 픽셀 있는지 확인
-    for x in [544, 540]:
-        # print([479, x])   # 왜 S는 100 + 2인지 확인
-        H_condition = (30 < H[479, x]) & (H[479, x]<80)     # 조건 1: 해당 픽셀의 Hue가 초록색 범위
-        S_condition = S[479, x]==100+2                      # 조건 2: 해당 픽셀의 Saturation이 100임
-        V_condition = V[479, x]==100                      # 조건 3: 해당 픽셀의 Value가 100임
-        if H_condition and S_condition and V_condition:
-            bottom_green_x = x
-            break
+    if(0):
+        for x in [544, 540]:
+            # print([479, x])   # 왜 S는 100 + 2인지 확인
+            H_condition = (30 < H[479, x]) & (H[479, x]<80)     # 조건 1: 해당 픽셀의 Hue가 초록색 범위
+            S_condition = S[479, x]==100+2                      # 조건 2: 해당 픽셀의 Saturation이 100임
+            V_condition = V[479, x]==100                      # 조건 3: 해당 픽셀의 Value가 100임
+            if H_condition and S_condition and V_condition:
+                bottom_green_x = x
+                break
 
     # 이미지 상단에 초록색 픽셀 있는지 확인
     
