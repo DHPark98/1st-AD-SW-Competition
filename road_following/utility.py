@@ -81,7 +81,16 @@ def roi_cutting(image):
     image = image[100:350]
     return image
 
-
+def preprocess(image, mode, device = "cuda"):
+    if mode == "train":
+        image = transforms.functional.to_tensor(image)
+        image = transforms.functional.normalize(image, [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        return image
+    if mode == "test":
+        image = transforms.functional.to_tensor(image).to(device)
+        image = transforms.functional.normalize(image, [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        image = image[None, ...]
+        return image
 
 
 def dominant_gradient(image):
