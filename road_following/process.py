@@ -27,7 +27,8 @@ class DoWork:
         self.speed = 30
         self.direction = 0
         self.rf_network = model.ResNet18(weight_file = self.rf_weight_file)
-        self.detect_network = DetectMultiBackend(weights = detect_weight_file, device = "cuda")
+        if self.detect_weight_file != None:
+            self.detect_network = DetectMultiBackend(weights = detect_weight_file)
         self.labels_to_names = {1 : "Green", 2 : "Red", 0 : "Crosswalk"}
         
     def serial_start(self):
@@ -60,7 +61,7 @@ class DoWork:
                 else:
                     cam_img = self.camera_module.read()
                     bird_img = bird_convert(cam_img, self.cam_name)
-                    roi_img = roi_cutting(bird_img)
+                    # roi_img = roi_cutting(bird_img)
                     
                     self.direction = torch.argmax(self.rf_network.run(preprocess(bird_img, mode = "test"))).item() - 7 # bird_eye_view
                     # self.direction = torch.argmax(self.rf_network.run(preprocess(roi_img, mode = "test"))).item() - 7 # roi_view
@@ -75,18 +76,18 @@ class DoWork:
                         pred = self.detect_network(cam_img)
                         pred = non_max_suppression(pred)[0]
                         
-                    for *box, cf, cls in pred:
-                        cf = cf.item()
-                        cls = cls.item()
+                        for *box, cf, cls in pred:
+                            cf = cf.item()
+                            cls = cls.item()
 
-                        p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
+                            p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
 
-                        bbox_area = (p2[0] - p1[0]) * (p2[1] - p1[1])
+                            # bbox_area = (p2[0] - p1[0]) * (p2[1] - p1[1])
 
-                        caption = "{}: {:.4f}".format(self.labels_to_names[cls], cf)
-                        cv2.rectangle(draw_img, p1, p2, color = (0, 255, 0), thickness = 2)
-                        cv2.putText(draw_img, caption, (p1[0], p1[1] - 2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), thickness = 1)
-                    
+                            caption = "{}: {:.4f}".format(self.labels_to_names[cls], cf)
+                            cv2.rectangle(draw_img, p1, p2, color = (0, 255, 0), thickness = 2)
+                            cv2.putText(draw_img, caption, (p1[0], p1[1] - 2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), thickness = 1)
+                        
                     cv2.imshow('VideoCombined', draw_img)
                     
                     pass
