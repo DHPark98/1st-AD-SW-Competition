@@ -9,7 +9,7 @@ import sys
 sys.path.append(os.path.join(os.path.abspath(__file__), "yolov5"))
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import non_max_suppression
-from utility import roi_cutting, preprocess
+from utility import roi_cutting, preprocess, show_bounding_box, object_detection
 
 
 class DoWork:
@@ -29,7 +29,7 @@ class DoWork:
         self.rf_network = model.ResNet18(weight_file = self.rf_weight_file)
         if self.detect_weight_file != None:
             self.detect_network = DetectMultiBackend(weights = detect_weight_file)
-        self.labels_to_names = {1 : "Green", 2 : "Red", 0 : "Crosswalk"}
+        
         
     def serial_start(self):
         try:
@@ -63,32 +63,27 @@ class DoWork:
                     bird_img = bird_convert(cam_img, self.cam_name)
                     # roi_img = roi_cutting(bird_img)
                     
-                    self.direction = torch.argmax(self.rf_network.run(preprocess(bird_img, mode = "test"))).item() - 7 # bird_eye_view
-                    # self.direction = torch.argmax(self.rf_network.run(preprocess(roi_img, mode = "test"))).item() - 7 # roi_view
                     
-                    message = 'a' + str(self.direction) +  's' + str(self.speed)
-                    self.serial.write(message.encode())
-                    print(message)
                     draw_img = cam_img.copy()
+                    
                     if self.detect_weight_file != None:
                         image = transform.functional.to_tensor(cam_img)
                         image = image[None, ...]
                         pred = self.detect_network(cam_img)
                         pred = non_max_suppression(pred)[0]
                         
-                        for *box, cf, cls in pred:
-                            cf = cf.item()
-                            cls = cls.item()
+                        draw_img = show_bounding_box(draw_img)
 
-                            p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
-
-                            # bbox_area = (p2[0] - p1[0]) * (p2[1] - p1[1])
-
-                            caption = "{}: {:.4f}".format(self.labels_to_names[cls], cf)
-                            cv2.rectangle(draw_img, p1, p2, color = (0, 255, 0), thickness = 2)
-                            cv2.putText(draw_img, caption, (p1[0], p1[1] - 2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), thickness = 1)
-                        
+                        # object_detection(pred)
+                    
+                    self.direction = torch.argmax(self.rf_network.run(preprocess(bird_img, mode = "test"))).item() - 7 # bird_eye_view
+                    # self.direction = torch.argmax(self.rf_network.run(preprocess(roi_img, mode = "test"))).item() - 7 # roi_view
+                    
+                    message = 'a' + str(self.direction) +  's' + str(self.speed)
+                    self.serial.write(message.encode())
+                    print(message)
                     cv2.imshow('VideoCombined', draw_img)
+                    
                     
                     pass
             except Exception as e:

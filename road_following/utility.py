@@ -92,6 +92,28 @@ def preprocess(image, mode, device = "cuda"):
         image = image[None, ...]
         return image
 
+def show_bounding_box(image, pred):
+    labels_to_names = {0 : "Crosswalk", 1 : "Green", 2 : "Red", 3 : "Car"}
+    
+    for *box, cf, cls in pred:
+        cf = cf.item()
+        cls = cls.item()
+        p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
+        caption = "{}: {:.4f}".format(labels_to_names[cls], cf)
+        cv2.rectangle(image, p1, p2, color = (0, 255, 0), thickness = 2)
+        cv2.putText(image, caption, (p1[0], p1[1] - 2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), thickness = 1)
+    
+    return image
+
+def object_detection(pred):
+    for *box, cf, cls in pred:
+        p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
+        bbox_area = (p2[0] - p1[0]) * (p2[1] - p1[1])
+        
+            
+            
+            
+    
 
 def dominant_gradient(image):
 
