@@ -1,13 +1,9 @@
 import torch
-import torch.nn.functional as F
-import torchvision.datasets as datasets
-import torchvision.models as models
-import torchvision.transforms as transforms
 import glob
-import PIL.Image
 import os
-from utility import get_resistance_value
-
+from utility import get_resistance_value, preprocess
+import torch.nn.functional as F
+import cv2
 
 class RFDataset(torch.utils.data.Dataset):
     
@@ -21,13 +17,12 @@ class RFDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         image_path = self.image_paths[idx]
         
-        image = PIL.Image.open(image_path)
-        width, height = image.size
+        image = cv2.imread(image_path)
         res_value = int(get_resistance_value(image_path)) + 7
         
-        # image = transforms.functional.resize(image, (640, 480))
-        image = transforms.functional.to_tensor(image)
-        image = transforms.functional.normalize(image, [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        # image = processing(image)
+        tensor_image = preprocess(image, mode="train")
         
-        return image, F.one_hot(torch.tensor(res_value), num_classes=15)
+        # return tensor_image, F.one_hot(torch.tensor(res_value), num_classes=15) # classification
+        return tensor_image, torch.tensor(res_value, dtype=torch.float32)# regression
     
