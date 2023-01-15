@@ -102,6 +102,9 @@ def only_stadium(image):    # 경기장 밖 지우는 함수
     
     white_scene = np.ones((480,640))
     #cv2.imshow("satisfied", white_scene)
+
+    green_points = np.argwhere(satisfied)
+    
     #---------------------------------------------------------------------------------------------
 
     '''
