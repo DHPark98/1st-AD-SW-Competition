@@ -139,10 +139,6 @@ def dominant_gradient(image):
     img_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     img_blur = cv2.GaussianBlur(img_gray, (0,0),1)
     img_edge = cv2.Canny(img_blur, 110,180)
-
-    #cv2.imshow('gray', img_gray)
-    #cv2.imshow('blur', img_blur)
-    # cv2.imshow('edge', img_edge)
     
 
     #ppp = True 
@@ -174,7 +170,10 @@ def dominant_gradient(image):
                 if(theta < 1.87 and theta > 1.27):
                     continue
                 else:
-                    angle = np.arctan((x2-x1)/(y1-y2))*180/np.pi
+                    if y1 == y2:
+                        angle = 999
+                    else:
+                        angle = np.arctan((x2-x1)/(y1-y2))*180/np.pi
                     angles.append(angle)
                 
                 #if ( (x2 != x1) and (np.abs((y2-y1)/(x2-x1))<0.3)):
