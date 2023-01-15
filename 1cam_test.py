@@ -28,9 +28,9 @@ while img_idx < 30:
         img_idx = 1
     if (ret is True):
         # print(frame.shape)
-        cv2.imshow('frame', frame)
-        # frame_p = total_function(frame, 'front')
-        # cv2.imshow('processed', frame_p)
+        #cv2.imshow('frame', frame)
+        frame_p = total_function(frame, 'front')
+        cv2.imshow('processed', frame_p)
 
         if cv2.waitKey(25) == ord('f') :
             break

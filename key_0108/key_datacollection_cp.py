@@ -85,7 +85,7 @@ def receive_from_Ard():     # Argument : ser ?
 if __name__ == '__main__':
 
     
-    path = '/home/skkcar/Desktop/contest/data_img/0113a/'     ###
+    path = '/home/skkcar/Desktop/contest/data_img/0114/'     ###
 
     try:
         if not os.path.exists(path):
@@ -173,8 +173,8 @@ if __name__ == '__main__':
             img_f_bird = total_function(img_f, 'front')     # image processed front
             #img_b_bird = total_function(img_b, 'back')     # image processed back
             
-            cv2.imshow('Video_f', img_f)
-            cv2.imshow('Video_b', img_b)
+            #cv2.imshow('Video_f', img_f)
+            #cv2.imshow('Video_b', img_b)            
             cv2.imshow('Video_f_bird', img_f_bird)
             # print(img_p_f.shape)
 

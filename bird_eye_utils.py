@@ -107,10 +107,20 @@ def total_function(img, FB):
     # img_gray = cv2.cvtColor(img_w_f, cv2.COLOR_BGR2GRAY)
     # ret, img_thresh = cv2.threshold(img_gray, 100, 255, cv2.THRESH_BINARY)
 
-    # cv2.imshow('warp', img_warpped)    ###
+    #cv2.imshow('warp', img_warpped)    ###
     # cv2.imshow('filter', img_w_f)    ###
     # cv2.imshow('gray', img_gray)
+    
+    ##Canny
+    img_gray = cv2.cvtColor(img_warpped, cv2.COLOR_BGR2GRAY)
+    img_blur = cv2.GaussianBlur(img_gray, (0,0),1)
+    img_edge = cv2.Canny(img_blur, 110,180)
+    
+    #cv2.imshow('gray', img_gray)
+    #cv2.imshow('blur', img_blur)
+    cv2.imshow('edge', img_edge)
     return img_warpped
+    #return img_edge
 
 
 if __name__ == '__main__':
