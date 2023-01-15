@@ -151,8 +151,6 @@ def hide_car_head(image):
     HSV_frame = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     H,S,V = cv2.split(HSV_frame)
 
-
-
     x = np.linspace(0,639,640)
     y = np.linspace(0,479,480)
     X,Y = np.meshgrid(x,y)
@@ -174,25 +172,19 @@ def hide_car_head(image):
 
 
 def total_function(image):
-    image_blured = cv2.GaussianBlur(image, (0,0), 3)
+    image_blured = cv2.GaussianBlur(image, (0,0), 5)
     image_filtered = color_filter(image_blured)
-    #image_filtered = color_filter(image)
     image_no_black = remove_black(image_filtered)
     image_stadium = only_stadium(image_no_black)
     car_hidden = hide_car_head(image_stadium)
     image_gray = cv2.cvtColor(car_hidden, cv2.COLOR_BGR2GRAY)
     
     #ret, thresh = cv2.threshold(image_gray, 20, 255, cv2.THRESH_BINARY) # thresh : 160
-    # cv2.imshow("blured", image_blured)
-    # cv2.imshow("no black", image_no_black)
-    # cv2.imshow("stadium", image_stadium)
-    # cv2.imshow("gray", image_gray)
     
-    #cv2.imshow("test2", thresh)
+    
 
-    image_edge = cv2.Canny(image_gray, 110,180)
-
-    # cv2.imshow('edge', image_edge) 
+    #image_edge = cv2.Canny(image_gray, 110,180)
+    #cv2.imshow('edge', image_edge) 
 
 
     return car_hidden 
