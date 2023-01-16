@@ -22,8 +22,9 @@ import uuid
 import os
 import sys
 
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-from bird_eye_utils import *
+path_project = os.path.dirname(os.path.dirname(__file__))
+sys.path.append(path_project)
+from before_utils.bird_eye_utils import *
 
 # Functions
 def dir_and_speed(input_key, direction, speed):

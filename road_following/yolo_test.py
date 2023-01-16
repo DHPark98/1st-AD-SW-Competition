@@ -4,10 +4,13 @@ import sys
 import torch
 import numpy as np
 import torchvision.transforms as transform
-sys.path.append("/home/woonho/python/1st-AD-SW-Competition/road_following/yolov5")
+import matplotlib.pyplot as plt
+
+path_rf = os.path.dirname(__file__)
+print(path_rf)
+sys.path.append(path_rf + "/yolov5")
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import non_max_suppression
-import matplotlib.pyplot as plt
 
 labels_to_names = {1 : "Green", 2 : "Red", 0 : "Crosswalk"}
 
