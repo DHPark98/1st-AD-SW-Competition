@@ -175,6 +175,8 @@ def total_function(image):
     image_no_black = remove_black(image_filtered)
     image_stadium = only_stadium(image_no_black)
     car_hidden = hide_car_head(image_stadium)
+    #car_hidden = car_hidden[300:]
+
     image_gray = cv2.cvtColor(car_hidden, cv2.COLOR_BGR2GRAY)
     
     #ret, thresh = cv2.threshold(image_gray, 20, 255, cv2.THRESH_BINARY) # thresh : 160

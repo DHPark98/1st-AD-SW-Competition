@@ -79,7 +79,7 @@ def return_augmented_images(image, style):
     
     
 def roi_cutting(image):
-    image = image[100:350]
+    image = image[200:]
     return image
 
 def preprocess(image, mode, device = "cuda"):
