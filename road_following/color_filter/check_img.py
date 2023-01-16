@@ -4,11 +4,12 @@ import matplotlib.pyplot as plt
 import pickle
 import os
 import glob
-#from custom_code import *
-from Dataset.preprocess_pdh import *
 import sys
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
+path_rf = os.path.dirname(os.path.dirname(__file__))
+print(path_rf)
+sys.path.append(path_rf)
+from Dataset.preprocess_pdh import *
 from utility import dominant_gradient
 
 #imgs = glob.glob("./img/*.png")
