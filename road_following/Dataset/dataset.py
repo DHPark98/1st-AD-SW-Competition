@@ -4,7 +4,7 @@ import os
 from utility import get_resistance_value, preprocess
 import torch.nn.functional as F
 import cv2
-from preprocess_pdh import total_function
+from Dataset.preprocess_pdh import total_function
 
 class RFDataset(torch.utils.data.Dataset):
     
@@ -21,7 +21,6 @@ class RFDataset(torch.utils.data.Dataset):
         image = cv2.imread(image_path)
         res_value = int(get_resistance_value(image_path)) + 7
         
-        image = total_function(image)
         tensor_image = preprocess(image, mode="train")
         
         return tensor_image, F.one_hot(torch.tensor(res_value), num_classes=15) # classification

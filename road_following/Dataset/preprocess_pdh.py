@@ -7,8 +7,6 @@ image_width = 640
 image_height = 480
 direction_div = 12
 
-
-
 def color_filter(image):
     HSV_frame = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     H,S,V = cv2.split(HSV_frame)
@@ -180,13 +178,6 @@ def total_function(image):
     image_gray = cv2.cvtColor(car_hidden, cv2.COLOR_BGR2GRAY)
     
     #ret, thresh = cv2.threshold(image_gray, 20, 255, cv2.THRESH_BINARY) # thresh : 160
-    
-    
-
-    #image_edge = cv2.Canny(image_gray, 110,180)
-    #cv2.imshow('edge', image_edge) 
-
-
     return car_hidden 
 
 
