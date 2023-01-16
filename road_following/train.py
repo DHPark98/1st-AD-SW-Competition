@@ -21,13 +21,12 @@ test_loader = DatasetLoader(test_dataset)
 print("Data Load Complete!")
 print("-------------------------")
 
-# model = models.resnet18(pretrained=True)
-# model.fc = torch.nn.Linear(512, 15)
 
 model = models.resnet18(pretrained=True)
+model.conv1 = torch.nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
 model.fc = torch.nn.Linear(512, 15)
 
-device = "cuda:1" if torch.cuda.is_available() else "cpu"
+device = "cuda:2" if torch.cuda.is_available() else "cpu"
 model = model.to(device)
 
 

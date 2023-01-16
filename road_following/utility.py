@@ -8,7 +8,7 @@ import random
 import numpy as np
 from Algorithm.outdoor_lane_detection import *
 import time
-from Dataset.preprocess_pdh import total_function
+from Algorithm.img_preprocess import cvt_binary, total_function
 
 
 def get_resistance_value(file):
@@ -79,20 +79,18 @@ def return_augmented_images(image, style):
     
     
 def roi_cutting(image):
-    image = image[100:350]
+    image = image[200:]
     return image
 
 def preprocess(image, mode, device = "cuda"):
     if mode == "train":
-        image = total_function(image)
         image = transforms.functional.to_tensor(image)
-        image = transforms.functional.normalize(image, [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        # image = transforms.functional.normalize(image, [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         
         return image
     if mode == "test":
-        image = total_function(image)
         image = transforms.functional.to_tensor(image).to(device)
-        image = transforms.functional.normalize(image, [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        # image = transforms.functional.normalize(image, [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         image = image[None, ...]
         return image
 
