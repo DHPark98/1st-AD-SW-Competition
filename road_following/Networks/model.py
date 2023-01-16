@@ -11,7 +11,7 @@ class ResNet18:
         self.model.fc = torch.nn.Linear(512, self.num_classes)
         self.model.load_state_dict(torch.load(self.weight_file, self.device))
         self.model = self.model.to(device)
-        self.model = self.model.eval().half()
+        self.model = self.model.eval()
         
     def run(self, image):
         """_summary_

@@ -5,11 +5,11 @@ import torchvision.models as models
 from Dataset.dataset import RFDataset
 from utility import train_test_split, DatasetLoader
 
-NUM_EPOCHS = 20
-BEST_MODEL_PATH = './model_weight_file/best_steering_model_0115.pth'
+NUM_EPOCHS = 30
+BEST_MODEL_PATH = './model_weight_file/best_steering_model_0116.pth'
 best_loss = 1e9
 learning_rate = 1e-3
-rfdataset_path = "/hdd/woonho/autonomous_driving/rfdata/0113/"
+rfdataset_path = "/hdd/woonho/autonomous_driving/0115/"
     
 dataset = RFDataset(rfdataset_path)
 
@@ -21,10 +21,13 @@ test_loader = DatasetLoader(test_dataset)
 print("Data Load Complete!")
 print("-------------------------")
 
+# model = models.resnet18(pretrained=True)
+# model.fc = torch.nn.Linear(512, 15)
+
 model = models.resnet18(pretrained=True)
-model.fc = torch.nn.Linear(512, 15) # classification
-# model.fc = torch.nn.Linear(512, 1) # regression
-device = "cuda:2" if torch.cuda.is_available() else "cpu"
+model.fc = torch.nn.Linear(512, 15)
+
+device = "cuda:1" if torch.cuda.is_available() else "cpu"
 model = model.to(device)
 
 

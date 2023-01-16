@@ -6,8 +6,9 @@ import numpy as np
 import cv2
 import random
 import numpy as np
-from outdoor_lane_detection import *
+from Algorithm.outdoor_lane_detection import *
 import time
+from Dataset.preprocess_pdh import total_function
 
 
 def get_resistance_value(file):
@@ -35,7 +36,7 @@ def train_test_split(dataset, test_percent = 0.1):
     
     return train_dataset, test_dataset
 
-def DatasetLoader(dataset, batch_size = 32):
+def DatasetLoader(dataset, batch_size = 128):
     data_loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=batch_size,
@@ -83,14 +84,17 @@ def roi_cutting(image):
 
 def preprocess(image, mode, device = "cuda"):
     if mode == "train":
+        image = total_function(image)
         image = transforms.functional.to_tensor(image)
         image = transforms.functional.normalize(image, [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        return image.half()
+        
+        return image
     if mode == "test":
+        image = total_function(image)
         image = transforms.functional.to_tensor(image).to(device)
         image = transforms.functional.normalize(image, [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         image = image[None, ...]
-        return image.half()
+        return image
 
 def show_bounding_box(image, pred):
     labels_to_names = {0 : "Crosswalk", 1 : "Green", 2 : "Red", 3 : "Car"}
@@ -151,9 +155,9 @@ def dominant_gradient(image):
         angles = []
         for i in range(len(lines)):
             for rho, theta in lines[i]:
-                print('theta: ', end = '')
-                print(theta)
-                print('slope: ', end = '')
+                # print('theta: ', end = '')
+                # print(theta)
+                # print('slope: ', end = '')
 
                 a = np.cos(theta)
                 b = np.sin(theta)
@@ -163,15 +167,12 @@ def dominant_gradient(image):
                 y1 = int(y0+1000*(a))
                 x2 = int(x0 - 1000*(-b))
                 y2 = int(y0 -1000*(a))
-                #if(x1==x2):
-                #    print('inf')
-                #else:
-                #    print((y2-y1)/(x2-x1))
+                
                 if(theta < 1.87 and theta > 1.27):
                     continue
                 else:
                     if y1 == y2:
-                        angle = 999
+                        angle = 'inf'
                     else:
                         angle = np.arctan((x2-x1)/(y1-y2))*180/np.pi
                     angles.append(angle)
