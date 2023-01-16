@@ -6,7 +6,7 @@ from Dataset.dataset import RFDataset
 from utility import train_test_split, DatasetLoader
 
 NUM_EPOCHS = 30
-BEST_MODEL_PATH = './model_weight_file/best_steering_model_0115b.pth'
+BEST_MODEL_PATH = './model_weight_file/best_steering_model_0116.pth'
 best_loss = 1e9
 learning_rate = 1e-3
 rfdataset_path = "/hdd/woonho/autonomous_driving/0115/"
@@ -24,10 +24,10 @@ print("-------------------------")
 # model = models.resnet18(pretrained=True)
 # model.fc = torch.nn.Linear(512, 15)
 
-model = models.resnet50(pretrained=True)
-model.fc = torch.nn.Linear(2048, 15)
+model = models.resnet18(pretrained=True)
+model.fc = torch.nn.Linear(512, 15)
 
-device = "cuda:0" if torch.cuda.is_available() else "cpu"
+device = "cuda:1" if torch.cuda.is_available() else "cpu"
 model = model.to(device)
 
 

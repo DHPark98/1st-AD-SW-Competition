@@ -36,7 +36,7 @@ def train_test_split(dataset, test_percent = 0.1):
     
     return train_dataset, test_dataset
 
-def DatasetLoader(dataset, batch_size = 32):
+def DatasetLoader(dataset, batch_size = 128):
     data_loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=batch_size,
