@@ -9,6 +9,7 @@ import numpy as np
 from Algorithm.outdoor_lane_detection import *
 import time
 from Algorithm.img_preprocess import cvt_binary, total_function
+import matplotlib.pyplot as plt
 
 
 def get_resistance_value(file):
@@ -133,15 +134,14 @@ def object_detection(pred):
             
     
 
-def dominant_gradient(image):
+def dominant_gradient(image): # 흑백 이미지에서 gradient 값, 차선 하단 값 추출
 
     image_original = image.copy()
 
     ##Canny
-    img_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    img_blur = cv2.GaussianBlur(img_gray, (0,0),1)
+    # img_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    img_blur = cv2.GaussianBlur(image_original, (0,0),1)
     img_edge = cv2.Canny(img_blur, 110,180)
-    
 
     #ppp = True 
     ppp = False
@@ -151,6 +151,9 @@ def dominant_gradient(image):
 
         lines = cv2.HoughLines(img_edge,1,np.pi/180,50)
         angles = []
+        bottom_flag = np.zeros((640,))
+        bottom_idx = 280
+        
         for i in range(len(lines)):
             for rho, theta in lines[i]:
                 # print('theta: ', end = '')
@@ -166,6 +169,12 @@ def dominant_gradient(image):
                 x2 = int(x0 - 1000*(-b))
                 y2 = int(y0 -1000*(a))
                 
+                flag_idx = int((x1-x2)/(y1-y2) * (bottom_idx - 1 - y1) + x1)
+                if flag_idx < 0 or flag_idx >= 640:
+                    continue
+                bottom_flag[flag_idx] = 1
+                
+                
                 if(theta < 1.87 and theta > 1.27):
                     continue
                 else:
@@ -175,12 +184,9 @@ def dominant_gradient(image):
                         angle = np.arctan((x2-x1)/(y1-y2))*180/np.pi
                     angles.append(angle)
                 
-                #if ( (x2 != x1) and (np.abs((y2-y1)/(x2-x1))<0.3)):
-                #    print(theta)
-                #    continue
-                cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
-        print(angles)
-        res = np.vstack((image_original,image))
+                # cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
+        # print(angles)
+        # res = image
     if(ppp):
         minLineLength = 100
         maxLineGap = 0
@@ -199,7 +205,26 @@ def dominant_gradient(image):
     
     # after = time.time()
     #print(after - prev)
-    return res
+    result_idx = np.where(bottom_flag == 1)[0]
+    result = np.median(angles)
+    # result = np.average(angles)
+    return result, result_idx
     #return lane 
     #return img_edge
 
+def return_road_direction(road_gradient):
+    ret_direction = int(road_gradient / 5)
+    
+    ret_direction = 7 if ret_direction >= 7 else ret_direction
+    ret_direction = -7 if ret_direction <= -7 else ret_direction
+    
+    return ret_direction
+        
+
+def find_nearest(array, value=320):
+    array = np.asarray(array)
+    left_val = array[np.max(np.where(array <= value)[0])] if len(np.where(array <= value)[0]) != 0 else None
+    right_val = array[np.min(np.where(array > value)[0])] if len(np.where(array > value)[0]) != 0 else None
+    
+    
+    return left_val, right_val
