@@ -115,7 +115,7 @@ def object_detection(pred):
     for *box, cf, cls in pred:
         p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
         bbox_area = (p2[0] - p1[0]) * (p2[1] - p1[1])
-        
+        cls = int(cls)
         if bbox_area > bbox_threshold[cls] : # find object
             pred_array[cls] = True
     
