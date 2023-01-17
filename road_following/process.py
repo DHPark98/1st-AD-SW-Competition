@@ -10,8 +10,9 @@ dir, file = os.path.split(os.path.join(os.path.abspath(__file__)))
 sys.path.append(os.path.join(dir, "yolov5"))
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import non_max_suppression
-from utility import roi_cutting, preprocess, show_bounding_box, object_detection
-from Algorithm.img_preprocess import cvt_binary
+from utility import roi_cutting, preprocess, show_bounding_box, object_detection, dominant_gradient, cvt_binary, return_road_direction
+from Algorithm.Control import total_control, smooth_direction
+
 
 class DoWork:
     def __init__(self, play_name, cam_name, rf_weight_file, detect_weight_file = None):
@@ -61,7 +62,7 @@ class DoWork:
                     break
                     pass
                 else:
-                    self.speed = 100
+                    self.speed = 30
                     cam_img = self.camera_module.read()
                     bird_img = bird_convert(cam_img, self.cam_name)
                     
@@ -83,6 +84,11 @@ class DoWork:
 
                         order_flag = object_detection(pred)
                     
+                    road_gradient, bottom_value = dominant_gradient(roi_img)
+                    road_direction = return_road_direction(road_gradient)
+                    model_direction = torch.argmax(self.rf_network.run(preprocess(roi_img, mode = "test"))).item() - 7
+                    
+                    final_direction = total_control(road_direction, model_direction, bottom_value)
                     
 
                     if order_flag == 0:
@@ -90,39 +96,39 @@ class DoWork:
                         self.speed = 0
                         pass
                     elif order_flag == 1:
-                        binary_img = roi_cutting(cvt_binary(bird_img))
-                        self.direction = torch.argmax(self.rf_network.run(preprocess(binary_img, mode = "test"))).item() - 7 # bird_eye_view    
+                        self.direction = final_direction
+                        # self.direction = smooth_direction(bef_1d, bef_2d, bef_3d, final_direction)
                         pass
                     
                     elif order_flag == 2:
                         pass
-                    temp_message = "a0s0"
                     
                     
                     
                     message = 'a' + str(self.direction) +  's' + str(self.speed)
                     self.serial.write(message.encode())
                     print(message)
-
                     cv2.imshow('VideoCombined_detect', draw_img)
-                    cv2.imshow('VideoCombined_rf', binary_img)
+                    cv2.imshow('VideoCombined_rf', bird_img)
+                    
+                    bef_1d, bef_2d, bef_3d = self.direction, bef_1d, bef_2d
                     pass
             except Exception as e:
                 if self.camera_module:
-                    self.camera_module.close()
+                    print("Exception occur")
+                    self.camera_module.close_cam()
                     end_message = "a0s0"
                     self.serial.write(end_message.encode())
                     self.serial.close()
-                    cv2.destroyAllWindows()
                 break
                 pass
             except KeyboardInterrupt:
                 if self.camera_module:
-                    self.camera_module.close()
+                    print("Keyboard Interrupt occur")
+                    self.camera_module.close_cam()
                     end_message = "a0s0"
                     self.serial.write(end_message.encode())
                     self.serial.close()
-                    cv2.destroyAllWindows()
                 break
                 pass
             
@@ -140,7 +146,5 @@ class DoWork:
             
                 
                 
-        
-        
         
         
