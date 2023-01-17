@@ -23,6 +23,7 @@ import os
 import sys
 
 path_project = os.path.dirname(os.path.dirname(__file__))
+print(path_project)
 sys.path.append(path_project)
 from before_utils.bird_eye_utils import *
 
@@ -86,7 +87,7 @@ def receive_from_Ard():     # Argument : ser ?
 if __name__ == '__main__':
 
     
-    path = '/home/skkcar/Desktop/contest/data_img/0114/'     ###
+    path = '/home/skkcar/Desktop/contest/data_img/0116/'     ###
 
     try:
         if not os.path.exists(path):
