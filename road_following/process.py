@@ -53,26 +53,29 @@ class DoWork:
         
         
     def Dowork(self):
+        bef_1d, bef_2d, bef_3d = 0
         while True:
             try:
                 if self.camera_module == None:
+                    print("Please Check Camera module")
                     break
                     pass
                 else:
                     self.speed = 100
                     cam_img = self.camera_module.read()
                     bird_img = bird_convert(cam_img, self.cam_name)
-                    # roi_img = roi_cutting(bird_img)
                     
-
+                    binary_img = cvt_binary(bird_img)
+                    roi_img = roi_cutting(binary_img)
+                    
                     draw_img = cam_img.copy()
                     
                     order_flag = 1
                     
                     if self.detect_weight_file != None:
                         image = transform.functional.to_tensor(cam_img)
-                        
                         image = image[None, ...]
+                        
                         pred = self.detect_network(image)
                         pred = non_max_suppression(pred)[0]
                         
@@ -94,6 +97,8 @@ class DoWork:
                     elif order_flag == 2:
                         pass
                     temp_message = "a0s0"
+                    
+                    
                     
                     message = 'a' + str(self.direction) +  's' + str(self.speed)
                     self.serial.write(message.encode())
@@ -122,10 +127,13 @@ class DoWork:
                 pass
             
             if cv2.waitKey(25) == ord('f') :
+                if self.camera_module:
+                    self.camera_module.close_cam()
+                    cv2.destroyAllWindows()
                 end_message = "a0s0"
                 self.serial.write(end_message.encode())
                 self.serial.close()
-                cv2.destroyAllWindows()
+                
                 break
             
             time.sleep((0.00001))
