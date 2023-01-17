@@ -6,7 +6,7 @@ class CameraModule():
         self.image_height = height
         
     
-    def open_serial(self, cam_num):
+    def open_cam(self, cam_num):
         self.cam = cv2.VideoCapture(cam_num)
         self.cam.set(cv2.CAP_PROP_BUFFERSIZE, 1)           
         self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, self.image_width)      # 864

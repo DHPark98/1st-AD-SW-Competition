@@ -6,9 +6,9 @@ def control_correction(road_direction, model_direction): # 예측 값과 이미�
         direction = model_direction
     else:
         if road_direction < model_direction:
-            direction = road_direction - (abs(road_direction - model_direction) - 2)
-        else:
             direction = road_direction + (abs(road_direction - model_direction) - 2)
+        else:
+            direction = road_direction - (abs(road_direction - model_direction) - 2)
     
     return direction
 
