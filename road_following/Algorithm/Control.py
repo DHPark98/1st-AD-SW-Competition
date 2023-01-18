@@ -49,7 +49,10 @@ def strengthen_control(road_direction, bottom_value): # 차선에 너무 근접�
             """차선 근접도를 이용해서 direction 값 조절"""
     else:
         if left_idx == None or right_idx == None:
-            pass
+            if left_idx != None:
+                direction = 7
+            else:
+                direction = -7
         else:
             middle_lane = (left_idx + right_idx)/2
             
