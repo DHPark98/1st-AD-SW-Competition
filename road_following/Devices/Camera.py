@@ -9,8 +9,8 @@ class CameraModule():
     def open_cam(self, cam_num):
         self.cam = cv2.VideoCapture(cam_num)
         self.cam.set(cv2.CAP_PROP_BUFFERSIZE, 1)           
-        self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, self.image_width)      # 864
-        self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, self.image_height)     # 480
+        self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, self.image_width)
+        self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, self.image_height)
         
     def read(self):
         if self.cam.isOpened():
