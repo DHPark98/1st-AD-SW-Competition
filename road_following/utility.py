@@ -10,7 +10,7 @@ from Algorithm.outdoor_lane_detection import *
 import time
 from Algorithm.img_preprocess import cvt_binary, total_function
 import matplotlib.pyplot as plt
-
+import uuid
 
 def get_resistance_value(file):
     """_summary_
@@ -121,9 +121,6 @@ def object_detection(pred):
     
     if pred_array[0] and pred_array[2]: # stop
         return 0
-    
-    elif pred_array[0] and pred_array[1]: # go
-        return 1
     elif pred_array[3]: # 차선 변경
         return 2
     else:
@@ -140,26 +137,27 @@ def dominant_gradient(image): # 흑백 이미지에서 gradient 값, 차선 하�
 
     ##Canny
     # img_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    img_blur = cv2.GaussianBlur(image_original, (0,0),1)
-    img_edge = cv2.Canny(img_blur, 110,180)
-
+    try:
+        img_blur = cv2.GaussianBlur(image_original, (0,0),1)
+        img_edge = cv2.Canny(img_blur, 110,180)
+    except Exception as e:
+        print("Exception occurs in image")
+        exception_image_path = "./exception_image/"
+        cv2.imwrite(os.path.join(exception_image_path, "exception_image--{}.png".format(str(uuid.uuid1()))), image)
+        return None, None
+        
+        
     #ppp = True 
     ppp = False
-    
-    # prev = time.time()
-    if(not ppp):
 
-        lines = cv2.HoughLines(img_edge,1,np.pi/180,50)
+    if(not ppp):
+        lines = cv2.HoughLines(img_edge,1,np.pi/180,40)
         angles = []
         bottom_flag = np.zeros((640,))
         bottom_idx = 280
         
         for i in range(len(lines)):
             for rho, theta in lines[i]:
-                # print('theta: ', end = '')
-                # print(theta)
-                # print('slope: ', end = '')
-
                 a = np.cos(theta)
                 b = np.sin(theta)
                 x0 = a*rho
@@ -169,10 +167,13 @@ def dominant_gradient(image): # 흑백 이미지에서 gradient 값, 차선 하�
                 x2 = int(x0 - 1000*(-b))
                 y2 = int(y0 -1000*(a))
                 
-                flag_idx = int((x1-x2)/(y1-y2) * (bottom_idx - 1 - y1) + x1)
-                if flag_idx < 0 or flag_idx >= 640:
-                    continue
-                bottom_flag[flag_idx] = 1
+                if y1 > 120 or y2 > 120:
+                    flag_idx = int((x1-x2)/(y1-y2) * (bottom_idx - 1 - y1) + x1)
+                    if flag_idx < 0 or flag_idx >= 640:
+                        continue
+                    bottom_flag[flag_idx] = 1
+
+                
                 
                 
                 if(theta < 1.87 and theta > 1.27):
@@ -202,15 +203,19 @@ def dominant_gradient(image): # 흑백 이미지에서 gradient 값, 차선 하�
     #lines = cv2.HoughLinesP(img_edge, 2, np.pi/180., 50, minLineLength = 40, maxLineGap = 5)
     
     #lane = lane_detect(image)
+    try:
+        result_idx = np.where(bottom_flag == 1)[0]
+        result = np.median(angles)
+    except Exception as e:
+        print("Exception occurs in image")
+        exception_image_path = "./exception_image/"
+        cv2.imwrite(os.path.join(exception_image_path, "exception_image--{}.png".format(str(uuid.uuid1()))), image)
+        return None, None
     
-    # after = time.time()
-    #print(after - prev)
-    result_idx = np.where(bottom_flag == 1)[0]
-    result = np.median(angles)
+    
     # result = np.average(angles)
     return result, result_idx
-    #return lane 
-    #return img_edge
+
 
 def return_road_direction(road_gradient):
     ret_direction = int(road_gradient / 5)
