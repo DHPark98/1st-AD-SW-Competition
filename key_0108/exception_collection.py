@@ -25,8 +25,10 @@ import sys
 path_project = os.path.dirname(os.path.dirname(__file__))
 print(path_project)
 sys.path.append(path_project)
+sys.path.append("/home/skkcar/Desktop/contest/1st-AD-SW-Competition_0114/road_following/")
 from before_utils.bird_eye_utils import *
-
+from road_following.Algorithm.img_preprocess import total_function as total
+from road_following.Algorithm.img_preprocess import cvt_binary
 # Functions
 def dir_and_speed(input_key, direction, speed):
     brk = 0     # loop break
@@ -122,20 +124,20 @@ if __name__ == '__main__':
     cap_f.set(cv2.CAP_PROP_FRAME_WIDTH, image_width)      ### 864
     cap_f.set(cv2.CAP_PROP_FRAME_HEIGHT, image_height)     ### 480
    
-    cap_b = cv2.VideoCapture(4)     
-    cap_b.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-    cap_b.set(cv2.CAP_PROP_FRAME_WIDTH, image_width)      ### 864
-    cap_b.set(cv2.CAP_PROP_FRAME_HEIGHT, image_height)     ### 480
+    # cap_b = cv2.VideoCapture(4)     
+    # cap_b.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+    # cap_b.set(cv2.CAP_PROP_FRAME_WIDTH, image_width)      ### 864
+    # cap_b.set(cv2.CAP_PROP_FRAME_HEIGHT, image_height)     ### 480
 
     print(cv2.__version__) 
     print(cap_f.isOpened())
-    print(cap_b.isOpened())
+    # print(cap_b.isOpened())
 
     # FPS 확인
     fps_f = cap_f.get(cv2.CAP_PROP_FPS)     
     print('fps front', fps_f)
-    fps_b = cap_b.get(cv2.CAP_PROP_FPS)     
-    print('fps back', fps_b)
+    # fps_b = cap_b.get(cv2.CAP_PROP_FPS)     
+    # print('fps back', fps_b)
 
     ser.open()
     time.sleep(2)
@@ -145,7 +147,7 @@ if __name__ == '__main__':
 
     while True:
         retval_f, img_f = cap_f.read()  # left cam
-        retval_b, img_b = cap_b.read()  # right cam
+        # retval_b, img_b = cap_b.read()  # right cam
         time_pass_read = time.time() - time_prev_read
         time_pass_write = time.time() - time_prev_write
         input_key = 'o'
@@ -174,10 +176,14 @@ if __name__ == '__main__':
 
             img_f_bird = total_function(img_f, 'front')     # image processed front
             #img_b_bird = total_function(img_b, 'back')     # image processed back
-            
+            preprocess_img = total(img_f_bird)
+            binary_img = cvt_binary(img_f_bird)
             #cv2.imshow('Video_f', img_f)
             #cv2.imshow('Video_b', img_b)            
             cv2.imshow('Video_f_bird', img_f_bird)
+            cv2.imshow('Video_f_preprocess', preprocess_img)
+            cv2.imshow('Video_f_binary', binary_img)
+            
             # print(img_p_f.shape)
 
         # Write(Store) Image
@@ -194,8 +200,12 @@ if __name__ == '__main__':
             # cv2.imwrite(path+img_b_title+".png", img_b)
             
         
-            img_f_bird_title = "{0}f_bird--{1}--{2}--{3}".format(path, str(message), time_stamp, uuid_cur)
+            img_f_bird_title = "{0}f_bird--basic--{1}--{2}--{3}".format(path, str(message), time_stamp, uuid_cur)
+            preprocess_img_title = "{0}f_bird--preprocess--{1}--{2}--{3}".format(path, str(message), time_stamp, uuid_cur)
+            binary_img_title = "{0}f_bird--binary--{1}--{2}--{3}".format(path, str(message), time_stamp, uuid_cur)
             cv2.imwrite(img_f_bird_title + ".png", img_f_bird)
+            cv2.imwrite(preprocess_img_title+ ".png", preprocess_img)
+            cv2.imwrite(binary_img_title+ ".png", binary_img)
             
             time_prev_write = time.time()
 
@@ -211,8 +221,8 @@ if __name__ == '__main__':
     ser.close()
     if cap_f.isOpened():
         cap_f.release()
-    if cap_b.isOpened():
-        cap_b.release()
+    # if cap_b.isOpened():
+        # cap_b.release()
 
     cv2.destroyAllWindows()
 
