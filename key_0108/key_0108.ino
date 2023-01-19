@@ -5,7 +5,7 @@ const int FOWARD_RIGHT_1 = 2;
 const int FOWARD_RIGHT_2 = 3;
 const int FOWARD_LEFT_1 = 4;
 const int FOWARD_LEFT_2 = 5;
-const int POT = A1;
+const int POT = A4;
 const int STEERING_SPEED = 128;
 const int FOWARD_SPEED = 255;
 int angle = 0, straight = 0, str_spd = 100, resistance = 0, mapped_resistance = 0;

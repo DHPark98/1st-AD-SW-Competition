@@ -5,10 +5,11 @@ import pickle
 import os
 import glob
 #from custom_code import *
-from preprocess_pdh import *
+from Algorithm.img_preprocess import *
 import sys
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-
+path_rf = os.path.dirname(os.path.dirname(__file__))
+print(path_rf)
+sys.path.append(path_rf)
 from utility import dominant_gradient
 
 #imgs = glob.glob("./img/*.png")

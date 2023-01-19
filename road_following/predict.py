@@ -2,12 +2,10 @@ import os
 import cv2
 import torch
 from Networks.model import ResNet18
-from Networks.processing import preprocess
-from utility import get_resistance_value, roi_cutting
-from Dataset.dataset import RFDataset
+from utility import get_resistance_value, preprocess
 
 test_file_dir_path = "/hdd/woonho/autonomous_driving/rfdata/0111/"
-weight_file = "best_steering_model_0110.pth"
+weight_file = "./model_weight_file/best_steering_model_0115a.pth"
 
 img_list = os.listdir(test_file_dir_path)
 list_size = len(img_list)
@@ -23,8 +21,8 @@ for image in img_list:
     res_value = get_resistance_value(image)
     
     img = cv2.imread(os.path.join(test_file_dir_path, image))
-    # img = roi_cutting(img)
-    pred = torch.argmax(model.run(preprocess(img))) - 7
+    preprocess_img = preprocess(img, mode = "test")
+    pred = torch.argmax(model.run(preprocess_img)) - 7
     
     
     score = 1 - abs(res_value - pred) / 14

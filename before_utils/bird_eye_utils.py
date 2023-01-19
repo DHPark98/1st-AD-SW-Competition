@@ -40,13 +40,14 @@ def calibrate(image_dist):
 def which_srcmat(FB):
     dic_param = {}
     if FB == 'front':
-        path_perspect = os.path.dirname(os.path.abspath(__file__)) + '/find_srcmat'
-        with open(path_perspect + '/front_perspect_param.pkl', 'rb') as f:
+        # path_perspect = os.path.dirname(os.path.abspath(__file__)) + '/find_srcmat'
+        
+        with open('/home/skkcar/Desktop/contest/1st-AD-SW-Competition_0114/before_utils/front_perspect_param.pkl', 'rb') as f:
             # print('perspect.pkl opened!')   
             dic_param = pickle.load(f)
     elif FB == 'back':
-        path_perspect = os.path.dirname(os.path.abspath(__file__)) + '/find_srcmat'
-        with open(path_perspect + '/back_perspect_param.pkl', 'rb') as f:   
+        # path_perspect = os.path.dirname(os.path.abspath(__file__)) + '/find_srcmat'
+        with open('back_perspect_param.pkl', 'rb') as f:   
             # print('perspect.pkl opened!')   
             dic_param = pickle.load(f)
             

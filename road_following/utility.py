@@ -6,9 +6,11 @@ import numpy as np
 import cv2
 import random
 import numpy as np
-from outdoor_lane_detection import *
+from Algorithm.outdoor_lane_detection import *
 import time
-
+from Algorithm.img_preprocess import cvt_binary, total_function
+import matplotlib.pyplot as plt
+import uuid
 
 def get_resistance_value(file):
     """_summary_
@@ -35,7 +37,7 @@ def train_test_split(dataset, test_percent = 0.1):
     
     return train_dataset, test_dataset
 
-def DatasetLoader(dataset, batch_size = 32):
+def DatasetLoader(dataset, batch_size = 128):
     data_loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=batch_size,
@@ -78,19 +80,20 @@ def return_augmented_images(image, style):
     
     
 def roi_cutting(image):
-    image = image[100:350]
+    image = image[200:]
     return image
 
 def preprocess(image, mode, device = "cuda"):
     if mode == "train":
         image = transforms.functional.to_tensor(image)
-        image = transforms.functional.normalize(image, [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        return image.half()
+        # image = transforms.functional.normalize(image, [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        
+        return image
     if mode == "test":
         image = transforms.functional.to_tensor(image).to(device)
-        image = transforms.functional.normalize(image, [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        # image = transforms.functional.normalize(image, [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         image = image[None, ...]
-        return image.half()
+        return image
 
 def show_bounding_box(image, pred):
     labels_to_names = {0 : "Crosswalk", 1 : "Green", 2 : "Red", 3 : "Car"}
@@ -106,43 +109,55 @@ def show_bounding_box(image, pred):
     return image
 
 def object_detection(pred):
+    pred_array = [False, False, False, False] # 0:Crosswalk, 1:Green, 2:Red, 3:Car
+    bbox_threshold = [0, 0, 0, 0]
+    
     for *box, cf, cls in pred:
         p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
         bbox_area = (p2[0] - p1[0]) * (p2[1] - p1[1])
-        
+        cls = int(cls)
+        if bbox_area > bbox_threshold[cls] : # find object
+            pred_array[cls] = True
+    
+    if pred_array[0] and pred_array[2]: # stop
+        return 0
+    elif pred_array[3]: # 차선 변경
+        return 2
+    else:
+        return 1
+
             
             
             
     
 
-def dominant_gradient(image):
+def dominant_gradient(image): # 흑백 이미지에서 gradient 값, 차선 하단 값 추출
 
     image_original = image.copy()
 
     ##Canny
-    img_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    img_blur = cv2.GaussianBlur(img_gray, (0,0),1)
-    img_edge = cv2.Canny(img_blur, 110,180)
-
-    #cv2.imshow('gray', img_gray)
-    #cv2.imshow('blur', img_blur)
-    cv2.imshow('edge', img_edge)
-    
-
+    # img_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    try:
+        img_blur = cv2.GaussianBlur(image_original, (0,0),1)
+        img_edge = cv2.Canny(img_blur, 110,180)
+    except Exception as e:
+        print("Exception occurs in image")
+        exception_image_path = "./exception_image/"
+        cv2.imwrite(os.path.join(exception_image_path, "exception_image--{}.png".format(str(uuid.uuid1()))), image)
+        return None, None
+        
+        
     #ppp = True 
     ppp = False
-    
-    prev = time.time()
-    if(not ppp):
 
-        lines = cv2.HoughLines(img_edge,1,np.pi/180,50)
+    if(not ppp):
+        lines = cv2.HoughLines(img_edge,1,np.pi/180,40)
         angles = []
+        bottom_flag = np.zeros((640,))
+        bottom_idx = 280
+        
         for i in range(len(lines)):
             for rho, theta in lines[i]:
-                print('theta: ', end = '')
-                print(theta)
-                print('slope: ', end = '')
-
                 a = np.cos(theta)
                 b = np.sin(theta)
                 x0 = a*rho
@@ -151,20 +166,28 @@ def dominant_gradient(image):
                 y1 = int(y0+1000*(a))
                 x2 = int(x0 - 1000*(-b))
                 y2 = int(y0 -1000*(a))
-                #if(x1==x2):
-                #    print('inf')
-                #else:
-                #    print((y2-y1)/(x2-x1))
+                
+                if y1 > 120 or y2 > 120:
+                    flag_idx = int((x1-x2)/(y1-y2) * (bottom_idx - 1 - y1) + x1)
+                    if flag_idx < 0 or flag_idx >= 640:
+                        continue
+                    bottom_flag[flag_idx] = 1
+
+                
+                
+                
                 if(theta < 1.87 and theta > 1.27):
                     continue
                 else:
-                    angles.append(theta)
-                #if ( (x2 != x1) and (np.abs((y2-y1)/(x2-x1))<0.3)):
-                #    print(theta)
-                #    continue
-                cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
-        print(angles)
-        res = np.vstack((image_original,image))
+                    if y1 == y2:
+                        angle = 'inf'
+                    else:
+                        angle = np.arctan((x2-x1)/(y1-y2))*180/np.pi
+                    angles.append(angle)
+                
+                # cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
+        # print(angles)
+        # res = image
     if(ppp):
         minLineLength = 100
         maxLineGap = 0
@@ -180,10 +203,33 @@ def dominant_gradient(image):
     #lines = cv2.HoughLinesP(img_edge, 2, np.pi/180., 50, minLineLength = 40, maxLineGap = 5)
     
     #lane = lane_detect(image)
+    try:
+        result_idx = np.where(bottom_flag == 1)[0]
+        result = np.median(angles)
+    except Exception as e:
+        print("Exception occurs in image")
+        exception_image_path = "./exception_image/"
+        cv2.imwrite(os.path.join(exception_image_path, "exception_image--{}.png".format(str(uuid.uuid1()))), image)
+        return None, None
     
-    after = time.time()
-    #print(after - prev)
-    return res
-    #return lane 
-    #return img_edge
+    
+    # result = np.average(angles)
+    return result, result_idx
 
+
+def return_road_direction(road_gradient):
+    ret_direction = int(road_gradient / 5)
+    
+    ret_direction = 7 if ret_direction >= 7 else ret_direction
+    ret_direction = -7 if ret_direction <= -7 else ret_direction
+    
+    return ret_direction
+        
+
+def find_nearest(array, value=320):
+    array = np.asarray(array)
+    left_val = array[np.max(np.where(array <= value)[0])] if len(np.where(array <= value)[0]) != 0 else None
+    right_val = array[np.min(np.where(array > value)[0])] if len(np.where(array > value)[0]) != 0 else None
+    
+    
+    return left_val, right_val

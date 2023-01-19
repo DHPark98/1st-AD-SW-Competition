@@ -8,10 +8,12 @@ class ResNet18:
         self.weight_file = weight_file
         self.device = device
         self.model = torchvision.models.resnet18(pretrained=False)
+        self.model.conv1 = torch.nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.model.fc = torch.nn.Linear(512, self.num_classes)
+
         self.model.load_state_dict(torch.load(self.weight_file, self.device))
         self.model = self.model.to(device)
-        self.model = self.model.eval().half()
+        self.model = self.model.eval()
         
     def run(self, image):
         """_summary_

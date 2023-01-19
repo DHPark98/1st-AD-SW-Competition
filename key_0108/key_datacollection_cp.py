@@ -22,8 +22,10 @@ import uuid
 import os
 import sys
 
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-from bird_eye_utils import *
+path_project = os.path.dirname(os.path.dirname(__file__))
+print(path_project)
+sys.path.append(path_project)
+from before_utils.bird_eye_utils import *
 
 # Functions
 def dir_and_speed(input_key, direction, speed):
@@ -85,7 +87,7 @@ def receive_from_Ard():     # Argument : ser ?
 if __name__ == '__main__':
 
     
-    path = '/home/skkcar/Desktop/contest/data_img/0114/'     ###
+    path = '/home/skkcar/Desktop/contest/data_img/exception/'     ###
 
     try:
         if not os.path.exists(path):
