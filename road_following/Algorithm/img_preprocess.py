@@ -174,19 +174,9 @@ def total_function(image):
     image_blured = cv2.GaussianBlur(image, (0,0), 5)
     image_filtered = color_filter(image_blured)
     image_no_black = remove_black(image_filtered)
-    cv2.imshow('blur', image_blured)
-    cv2.imshow('filtered', image_filtered)
-    cv2.imshow('no_black', image_no_black)
-    
-    
     image_stadium = only_stadium(image_no_black)
-    image_stadium2 = only_stadium(image_filtered)
-    
     car_hidden = hide_car_head(image_stadium)
     #car_hidden = car_hidden[300:]
-    cv2.imshow('stad', image_stadium)
-    cv2.imshow('stad2', image_stadium2)
-    
     
     image_gray = cv2.cvtColor(car_hidden, cv2.COLOR_BGR2GRAY)
     
@@ -199,4 +189,3 @@ def cvt_binary(image):
     img_binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)[1]
     
     return img_binary
-
