@@ -92,6 +92,7 @@ def only_stadium(image):    # 경기장 밖 지우는 함수
     S_satisfied = S==100+2
     V_satisfied = V==100
     satisfied = H_satisfied & S_satisfied & V_satisfied
+    satisfied[:,639] = True
     check_top_green = len(np.where(satisfied[0])[0])
     check_top_green
     first_green_x = np.argmax(satisfied, axis = 1).reshape(480, 1)
@@ -173,10 +174,20 @@ def total_function(image):
     image_blured = cv2.GaussianBlur(image, (0,0), 5)
     image_filtered = color_filter(image_blured)
     image_no_black = remove_black(image_filtered)
+    cv2.imshow('blur', image_blured)
+    cv2.imshow('filtered', image_filtered)
+    cv2.imshow('no_black', image_no_black)
+    
+    
     image_stadium = only_stadium(image_no_black)
+    image_stadium2 = only_stadium(image_filtered)
+    
     car_hidden = hide_car_head(image_stadium)
     #car_hidden = car_hidden[300:]
-
+    cv2.imshow('stad', image_stadium)
+    cv2.imshow('stad2', image_stadium2)
+    
+    
     image_gray = cv2.cvtColor(car_hidden, cv2.COLOR_BGR2GRAY)
     
     #ret, thresh = cv2.threshold(image_gray, 20, 255, cv2.THRESH_BINARY) # thresh : 160
