@@ -85,8 +85,9 @@ def total_control(road_direction, model_direction, bottom_value):
     return final_direction
 
 def smooth_direction(bef1, bef2, bef3, cur):
-    average = (bef1 + bef2 + bef3 + cur) / 4
+    average = bef3 * 0.1 + bef2 * 0.2 + bef1 * 0.3 + cur * 0.4
     return round(average)
 
-    
+def road_change():
+    pass
         
