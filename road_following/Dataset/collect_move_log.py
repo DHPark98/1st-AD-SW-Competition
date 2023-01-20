@@ -93,7 +93,8 @@ class LogCollection():
                     self.serial.write(message.encode())
                     print(message)
                     
-                    f.write(message + '\n')
+                    if self.speed != 0:
+                        f.write(message + '\n')
                     
                     
                     pass
@@ -139,7 +140,7 @@ if __name__ == '__main__':
             os.mkdir(LOG_DIR_PATH)    
     except OSError:
         print('Error: Creating dirctory. ' + LOG_DIR_PATH)
-    FILE_NAME = "left_change"
+    FILE_NAME = "left_move.txt"
     
     
     processor = LogCollection("FRONT", os.path.join(LOG_DIR_PATH, FILE_NAME))
@@ -147,6 +148,7 @@ if __name__ == '__main__':
     if serial_result:
         cam_opened = processor.camera_start()
         if cam_opened:
+            print("Log Collection Start")
             processor.collection()
     
     

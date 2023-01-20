@@ -11,12 +11,12 @@ sys.path.append(os.path.join(rf_dir, "yolov5"))
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import non_max_suppression
 from utility import roi_cutting, preprocess, show_bounding_box, object_detection, dominant_gradient, cvt_binary, return_road_direction
-from Algorithm.Control import total_control, smooth_direction, road_change
+from Algorithm.Control import total_control, smooth_direction
 from Algorithm.img_preprocess import total_function
 from Algorithm.object_avoidance import avoidance
-
+from Algorithm.ideal_parking import idealparking
 class DoWork:
-    def __init__(self, play_name, front_cam_name, rear_cam_name, rf_weight_file, detect_weight_file = None):
+    def __init__(self, play_name, front_cam_name, rear_cam_name, rf_weight_file, detect_weight_file = None, parking_log = None):
         self.front_camera_module = None
         self.play_type = play_name
         self.cam_num = {"FRONT" : 2, "REAR" : 4}
@@ -37,7 +37,8 @@ class DoWork:
         self.labels_to_names = {0 : "Crosswalk", 1 : "Green", 2 : "Red", 3 : "Car"}
         
         self.avoidance_processor = avoidance(self.serial, left_log='left_move.txt',right_log='right_move.txt')
-        
+        self.parking_log = parking_log
+        self.parking_processor = idealparking(self.serial, self.parking_log)
     def serial_start(self):
         try:
             self.serial.open()
@@ -212,6 +213,7 @@ class DoWork:
                         """
                         parking action
                         """
+                        self.parking_processor.action(parking_location = 3)
                         if True:
                             """paking finish"""
                             if self.front_camera_module and self.rear_camera_module:

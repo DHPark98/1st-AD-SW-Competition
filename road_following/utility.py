@@ -237,5 +237,5 @@ def find_nearest(array, value=320):
     return left_val, right_val
 
 def is_outside(image): # Is current line outside?
-    
+    return True
     pass
