@@ -11,17 +11,10 @@ import time
 from Algorithm.img_preprocess import cvt_binary, total_function
 import matplotlib.pyplot as plt
 import uuid
+import sys
+from datetime import datetime
 
 def get_resistance_value(file):
-    """_summary_
-
-    Args:
-        file (_type_): _description_
-        ex) ./f_bird--a-1s20--1673179941.70651--b3ccbac7-8f4d-11ed-98fa-c3ae2a3ec2c8.png
-
-    Returns:
-        Image's var_resistance value
-    """
     dir, filename = os.path.split(file)
     
     if filename.split("--")[1][1] == "-":
@@ -84,6 +77,7 @@ def roi_cutting(image):
     return image
 
 def preprocess(image, mode, device = "cuda"):
+    
     if mode == "train":
         image = transforms.functional.to_tensor(image)
         # image = transforms.functional.normalize(image, [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
@@ -95,36 +89,46 @@ def preprocess(image, mode, device = "cuda"):
         image = image[None, ...]
         return image
 
+def box_area(box):
+    p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
+    box_area = (p2[0] - p1[0]) * (p2[1] - p1[1])
+    return box_area
+
 def show_bounding_box(image, pred):
     labels_to_names = {0 : "Crosswalk", 1 : "Green", 2 : "Red", 3 : "Car"}
     
+    
     for *box, cf, cls in pred:
         cf = cf.item()
-        cls = cls.item()
+        cls = int(cls.item())
         p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
         caption = "{}: {:.4f}".format(labels_to_names[cls], cf)
         cv2.rectangle(image, p1, p2, color = (0, 255, 0), thickness = 2)
         cv2.putText(image, caption, (p1[0], p1[1] - 2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), thickness = 1)
+        
     
     return image
 
-def object_detection(pred):
-    pred_array = [False, False, False, False] # 0:Crosswalk, 1:Green, 2:Red, 3:Car
-    bbox_threshold = [0, 0, 0, 0]
+def object_detection(pred): # pred 중 class별로 가장 큰 bbox return
+    pred_array = [None, None, None, None] # 0:Crosswalk, 1:Green, 2:Red, 3:Car
+    bbox_threshold = [0, 0, 0, 0] # bbox area
     
     for *box, cf, cls in pred:
-        p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
-        bbox_area = (p2[0] - p1[0]) * (p2[1] - p1[1])
+        bbox_area = box_area(box)
         cls = int(cls)
-        if bbox_area > bbox_threshold[cls] : # find object
-            pred_array[cls] = True
-    
-    if pred_array[0] and pred_array[2]: # stop
-        return 0
-    elif pred_array[3]:                 # 차선 변경
-        return 2
-    else:                               # go
-        return 1
+        if bbox_area < bbox_threshold[cls] : # find object
+            if pred_array[cls] != None and box_area(pred_array[cls]) > bbox_area: 
+                pass
+            else:
+                pred_array[cls] = box
+                
+    if pred_array[0] != None and pred_array[2] != None:
+        order_flag = 0
+    elif pred_array[3] != None:
+        order_flag = 2
+    else:
+        order_flag = 1
+    return pred_array, order_flag
 
             
             
@@ -141,14 +145,20 @@ def dominant_gradient(image): # 흑백 이미지에서 gradient 값, 차선 하�
         img_blur = cv2.GaussianBlur(image_original, (0,0),1)
         img_edge = cv2.Canny(img_blur, 110,180)
     except Exception as e:
-        print("Exception occurs in img_process")
+        _, _, tb = sys.exc_info()
+        print("image preprocess error = {}, error line = {}".format(e, tb.tb_lineno))
+        
         exception_image_path = "./exception_image/"
-        cv2.imwrite(os.path.join(exception_image_path, "exception_image--{}.png".format(str(uuid.uuid1()))), image)
+        
+        try:
+            if not os.path.exists(exception_image_path):
+                os.mkdir(exception_image_path)    
+        except OSError:
+            print('Error: Creating dirctory. ' + exception_image_path)
+        
+        cv2.imwrite(os.path.join(exception_image_path, "exception_image--{}.png".format(datetime.now())), image)
         return None, None
         
-        
-    #ppp = True 
-    
     try:
         lines = cv2.HoughLines(img_edge,1,np.pi/180,40)
 
@@ -186,8 +196,14 @@ def dominant_gradient(image): # 흑백 이미지에서 gradient 값, 차선 하�
                     angles.append(angle)
         
     except Exception as e:
-        print("Exception occurs in Line detection")
+        _, _, tb = sys.exc_info()
+        print("gradient detection error = {}, error line = {}".format(e, tb.tb_lineno))
         exception_image_path = "./exception_image/"
+        try:
+            if not os.path.exists(exception_image_path):
+                os.mkdir(exception_image_path)    
+        except OSError:
+            print('Error: Creating dirctory. ' + exception_image_path)
         cv2.imwrite(os.path.join(exception_image_path, "exception_image--{}.png".format(str(uuid.uuid1()))), image)
         return None, None
 
@@ -233,3 +249,9 @@ def find_nearest(array, value=320):
     right_val = array[np.min(np.where(array > value)[0])] if len(np.where(array > value)[0]) != 0 else None
     
     return left_val, right_val
+
+def is_outside(image): # Is current line outside?
+    
+    
+    return True
+    pass

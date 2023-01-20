@@ -24,6 +24,8 @@ import torch.nn as nn
 from IPython.display import display
 from PIL import Image
 from torch.cuda import amp
+import sys
+sys.path.append("/home/woonho/python/1st-AD-SW-Competition/road_following/yolov5")
 
 from utils import TryExcept
 from utils.dataloaders import exif_transpose, letterbox
