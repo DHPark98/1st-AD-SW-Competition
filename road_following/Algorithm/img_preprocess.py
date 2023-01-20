@@ -21,12 +21,17 @@ def color_filter(image):
     S[green_condition] = 100
     V[green_condition] = 100
     # white
-    V_white_condition = V>150
+    V_white_condition = V>175
     H[V_white_condition] = 0
     S[V_white_condition] = 0
     V[V_white_condition] = 255
+    # gray
+    V_gray_condition = (115<V) & (V<=175)
+    H[V_gray_condition] = 120
+    S[V_gray_condition] = 150
+    V[V_gray_condition] = 250
     # black -> blue (road)
-    road_condition = True^ (green_condition | V_white_condition)
+    road_condition = True^ ( (green_condition | V_white_condition) | V_gray_condition)
     H[road_condition] = 120
     S[road_condition] = 150
     V[road_condition] = 150
@@ -109,6 +114,9 @@ def only_stadium(image):    # 경기장 밖 지우는 함수
     
     white_scene = np.ones((480,640))
     #cv2.imshow("satisfied", white_scene)
+
+    green_points = np.argwhere(satisfied)
+    
     #---------------------------------------------------------------------------------------------
 
     '''
