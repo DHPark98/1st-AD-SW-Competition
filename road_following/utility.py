@@ -135,7 +135,7 @@ def object_detection(pred): # pred 중 class별로 가장 큰 bbox return
             
     
 
-def dominant_gradient(image): # 흑백 이미지에서 gradient 값, 차선 하단 값 추출
+def dominant_gradient(image, pre_image): # 흑백 이미지에서 gradient 값, 차선 하단 값 추출
 
     image_original = image.copy()
 
@@ -156,7 +156,7 @@ def dominant_gradient(image): # 흑백 이미지에서 gradient 값, 차선 하�
         except OSError:
             print('Error: Creating dirctory. ' + exception_image_path)
         
-        cv2.imwrite(os.path.join(exception_image_path, "exception_image--{}.png".format(datetime.now())), image)
+        cv2.imwrite(os.path.join(exception_image_path, "exception_image--{}.png".format(datetime.now())), pre_image)
         return None, None
         
     try:

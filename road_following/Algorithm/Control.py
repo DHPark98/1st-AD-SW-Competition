@@ -18,7 +18,7 @@ def strengthen_control(road_direction, bottom_value): # 차선에 너무 근접�
     right_threshold = (370, 450, 530) ## threshold 값을 4등분해서 각 구간에 들어가면 weight값에 따라 방향 보정
     left_threshold = (100, 180, 250)
     
-    middle_threshold = (100, 200, 300, 340, 440, 540)
+    middle_threshold = (260, 280, 300, 340, 360, 380)
     left_idx, right_idx = find_nearest(bottom_value)
     if road_direction < 0:
         if left_idx == None or right_idx == None:
@@ -42,7 +42,7 @@ def strengthen_control(road_direction, bottom_value): # 차선에 너무 근접�
             if left_idx < left_threshold[0]:
                 direction = int(road_direction * 0.5)
             elif left_idx >= left_threshold[0] and left_idx < left_threshold[1]:
-                direction = int(road_direction * 1.3)
+                direction = int(road_direction * 1.2)
             elif left_idx >= left_threshold[1] and left_idx < left_threshold[2]:
                 direction = int(road_direction * 1.6)    
             else:

@@ -140,7 +140,7 @@ if __name__ == '__main__':
             os.mkdir(LOG_DIR_PATH)    
     except OSError:
         print('Error: Creating dirctory. ' + LOG_DIR_PATH)
-    FILE_NAME = "left_move.txt"
+    FILE_NAME = sys.argv[1]
     
     
     processor = LogCollection("FRONT", os.path.join(LOG_DIR_PATH, FILE_NAME))
