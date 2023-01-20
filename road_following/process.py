@@ -126,7 +126,7 @@ class DoWork:
                         pass
                     
                     elif order_flag == 2: # road change
-                        self.avoidance_processor.action(cam_img)
+                        self.avoidance_processor.action(preprocess_img)
                         pass
 
                     message = 'a' + str(self.direction) +  's' + str(self.speed)

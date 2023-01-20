@@ -12,9 +12,9 @@ class avoidance():
         self.left_log = left_log
         self.right_log = right_log
         pass
-    def action(self, cam_img):
+    def action(self, img):
         try:
-            if is_outside(cam_img) == True:
+            if is_outside(img) == True:
                 messages = moving_log(self.left_log)
             else:
                 messages = moving_log(self.right_log)
