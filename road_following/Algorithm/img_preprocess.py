@@ -13,7 +13,7 @@ def color_filter(image):
     
    
     # green
-    H_green_condition = (40<H) & (H<80)
+    H_green_condition = (35<H) & (H<80)
     S_green_condition = (S>30)
     V_green_condition = V>100
     green_condition = H_green_condition & S_green_condition & V_green_condition
@@ -21,15 +21,18 @@ def color_filter(image):
     S[green_condition] = 100
     V[green_condition] = 100
     # white
-    V_white_condition = V>175
+    V_white_condition = V>165
+    white_condition = V_white_condition
     H[V_white_condition] = 0
     S[V_white_condition] = 0
     V[V_white_condition] = 255
     # gray
-    V_gray_condition = (115<V) & (V<=175)
-    H[V_gray_condition] = 120
-    S[V_gray_condition] = 150
-    V[V_gray_condition] = 250
+    V_gray_condition = (115<V) & (V<=165)
+    # S_gray_condition = S<25
+    gray_condition = V_gray_condition #& S_gray_condition
+    H[gray_condition] = 120
+    S[gray_condition] = 150
+    V[gray_condition] = 150
     # black -> blue (road)
     road_condition = True^ ( (green_condition | V_white_condition) | V_gray_condition)
     H[road_condition] = 120
@@ -77,22 +80,8 @@ def only_stadium(image):    # 경기장 밖 지우는 함수
 
     bottom_green_x = -1
     top_green_x = -1
-
-    # 이미지 하단에 초록색 픽셀 있는지 확인
-    if(0):
-        for x in [544, 540]:
-            # print([479, x])   # 왜 S는 100 + 2인지 확인
-            H_condition = (30 < H[479, x]) & (H[479, x]<80)     # 조건 1: 해당 픽셀의 Hue가 초록색 범위
-            S_condition = S[479, x]==100+2                      # 조건 2: 해당 픽셀의 Saturation이 100임
-            V_condition = V[479, x]==100                      # 조건 3: 해당 픽셀의 Value가 100임
-            if H_condition and S_condition and V_condition:
-                bottom_green_x = x
-                break
-
-    # 이미지 상단에 초록색 픽셀 있는지 확인
-    
-    #HHK CODE-------------------------------------------------------------------------------------
     up_start_time = time.time()
+
     H_satisfied = (30 < H) & (H<80)
     S_satisfied = S==100+2
     V_satisfied = V==100
@@ -119,37 +108,7 @@ def only_stadium(image):    # 경기장 밖 지우는 함수
     
     #---------------------------------------------------------------------------------------------
 
-    '''
-    # 이미지 상단에 초록색 픽셀 있는지 확인
-    up_start_time = time.time()
-    for x in range(620, 20, -25):
-        H_condition = (30 < H[0, x]) & (H[0, x] < 80)     # 조건 1: 해당 픽셀의 Hue가 초록색 범위
-        S_condition = S[0, x]==100+2                      # 조건 2: 해당 픽셀의 Saturation이 100임
-        V_condition = V[0, x]==100                      # 조건 3: 해당 픽셀의 Value가 100임
-        if H_condition and S_condition and V_condition:   
-            top_green_x = x
-            break
-    up_finish_time = time.time()
-    print(up_finish_time-up_start_time)
-    print(bottom_green_x, top_green_x)
 
-    # 이미지 하단, 상단 모두에 초록색 픽셀이 있는 경우
-    if (bottom_green_x != -1) and (top_green_x != -1):
-        x = np.linspace(0,639,640)
-        y = np.linspace(0,479,480)
-        X,Y = np.meshgrid(x,y)
-
-        green_boundary = -479*(X- top_green_x + 2) + (bottom_green_x-top_green_x)*Y
-        green_boundary = green_boundary<0
-
-        H[green_boundary] = 50
-        S[green_boundary] = 100
-        V[green_boundary] = 100
-        
-        HSV_frame[:,:,0] = H
-        HSV_frame[:,:,1] = S
-        HSV_frame[:,:,2] = V
-    '''
     
     frame_stadium = cv2.cvtColor(HSV_frame, cv2.COLOR_HSV2BGR)
     return frame_stadium
@@ -189,6 +148,13 @@ def total_function(image):
     image_gray = cv2.cvtColor(car_hidden, cv2.COLOR_BGR2GRAY)
     
     #ret, thresh = cv2.threshold(image_gray, 20, 255, cv2.THRESH_BINARY) # thresh : 160
+    # cv2.imshow("blur", image_blured)
+    # cv2.imshow("filter", image_filtered)
+    # cv2.imshow("noblack", image_no_black)
+    # cv2.imshow("stadium", image_stadium)
+    # cv2.imshow("carhidden", car_hidden)
+
+
     return car_hidden 
 
 def cvt_binary(image):
