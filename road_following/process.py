@@ -30,7 +30,7 @@ class DoWork:
         self.serial = serial.Serial()
         self.serial.port = '/dev/ttyUSB0'       ### 아두이노 메가
         self.serial.baudrate = 9600
-        self.speed = 30
+        self.speed = 150
         self.direction = 0
         self.rf_network = model.ResNet18(weight_file = self.rf_weight_file)
         self.detect_network = DetectMultiBackend(weights = detect_weight_file)
@@ -107,7 +107,7 @@ class DoWork:
                     
                     road_gradient, bottom_value = dominant_gradient(roi_img, preprocess_img)
                     
-                    if (road_gradient, bottom_value) == (None, None): # Gradient가 없을 경우 예외처리(Exception Image)
+                    if (road_gradient == None and bottom_value == None): # Gradient가 없을 경우 예외처리(Exception Image)
                         self.direction = 0
                         message = 'a' + str(self.direction) +  's' + str(self.speed)
                         self.serial.write(message.encode())
@@ -177,7 +177,7 @@ class DoWork:
                 
                 break
             
-            time.sleep((0.0001))
+            time.sleep((0.0003))
     
     def Parking(self):
         """

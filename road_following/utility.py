@@ -194,6 +194,7 @@ def dominant_gradient(image, pre_image): # 흑백 이미지에서 gradient 값, 
                     else:
                         angle = np.arctan((x2-x1)/(y1-y2))*180/np.pi
                     angles.append(angle)
+                    
         
     except Exception as e:
         _, _, tb = sys.exc_info()
@@ -204,7 +205,7 @@ def dominant_gradient(image, pre_image): # 흑백 이미지에서 gradient 값, 
                 os.mkdir(exception_image_path)    
         except OSError:
             print('Error: Creating dirctory. ' + exception_image_path)
-        cv2.imwrite(os.path.join(exception_image_path, "exception_image--{}.png".format(str(uuid.uuid1()))), image)
+        cv2.imwrite(os.path.join(exception_image_path, "exception_image--{}.png".format(str(uuid.uuid1()))), pre_image)
         return None, None
 
         
@@ -227,11 +228,26 @@ def dominant_gradient(image, pre_image): # 흑백 이미지에서 gradient 값, 
     #lines = cv2.HoughLinesP(img_edge, 2, np.pi/180., 50, minLineLength = 40, maxLineGap = 5)
     
     #lane = lane_detect(image)
-    result_idx = np.where(bottom_flag == 1)[0]
-    result = np.median(angles)
+    try:
     
+        result_idx = np.where(bottom_flag == 1)[0]
+        result = np.median(angles)
+
+        print(angles)
+        return result, result_idx
+    except Exception as e:
+        _, _, tb = sys.exc_info()
+        print("gradient detection error = {}, error line = {}".format(e, tb.tb_lineno))
+        exception_image_path = "./exception_image/"
+        try:
+            if not os.path.exists(exception_image_path):
+                os.mkdir(exception_image_path)    
+        except OSError:
+            print('Error: Creating dirctory. ' + exception_image_path)
+        cv2.imwrite(os.path.join(exception_image_path, "exception_image--{}.png".format(str(uuid.uuid1()))), pre_image)
+        return None, None
     # result = np.average(angles)
-    return result, result_idx
+    
 
 
 def return_road_direction(road_gradient):
