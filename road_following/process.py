@@ -11,9 +11,9 @@ sys.path.append(os.path.join(rf_dir, "yolov5"))
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import non_max_suppression
 from utility import roi_cutting, preprocess, show_bounding_box, object_detection, dominant_gradient, cvt_binary, return_road_direction
-from Algorithm.Control import total_control, smooth_direction
+from Algorithm.Control import total_control, smooth_direction, road_change
 from Algorithm.img_preprocess import total_function
-
+from Algorithm.object_avoidance import avoidance
 
 class DoWork:
     def __init__(self, play_name, front_cam_name, rear_cam_name, rf_weight_file, detect_weight_file = None):
@@ -35,6 +35,8 @@ class DoWork:
         self.rf_network = model.ResNet18(weight_file = self.rf_weight_file)
         self.detect_network = DetectMultiBackend(weights = detect_weight_file)
         self.labels_to_names = {0 : "Crosswalk", 1 : "Green", 2 : "Red", 3 : "Car"}
+        
+        self.avoidance_processor = avoidance(self.serial, left_log='left_move.txt',right_log='right_move.txt')
         
     def serial_start(self):
         try:
@@ -72,6 +74,7 @@ class DoWork:
         
     def Driving(self):
         bef_1d, bef_2d, bef_3d = 0,0,0
+        
         while True:
             try:
                 if self.front_camera_module == None:
@@ -90,14 +93,13 @@ class DoWork:
                     order_flag = 1
                     
                     if self.detect_weight_file != None: # Detection 했을 경우
-                        image = preprocess(cam_img, "test")
-                        image = image.cpu()
+                        image = preprocess(cam_img, "test", device = "cpu")
                         pred = self.detect_network(image)
                         pred = non_max_suppression(pred)[0]
                         
-                        draw_img, = show_bounding_box(draw_img, pred)
+                        draw_img = show_bounding_box(draw_img, pred)
 
-                        order_flag = object_detection(pred)
+                        detect, order_flag = object_detection(pred)
                     
                     road_gradient, bottom_value = dominant_gradient(roi_img)
                     
@@ -114,18 +116,17 @@ class DoWork:
                     final_direction = total_control(road_direction, model_direction, bottom_value)
                    
 
-                    if order_flag == 0:
-                        print("Stop")
+                    if order_flag == 0: # stop
                         self.direction = 0
                         self.speed = 0
                         pass
-                    elif order_flag == 1:
+                    elif order_flag == 1: # go
                         # self.direction = final_direction
                         self.direction = smooth_direction(bef_1d, bef_2d, bef_3d, final_direction)
                         pass
                     
-                    elif order_flag == 2:
-                        print("Road change")
+                    elif order_flag == 2: # road change
+                        self.avoidance_processor.action(cam_img)
                         pass
 
                     message = 'a' + str(self.direction) +  's' + str(self.speed)
@@ -141,7 +142,7 @@ class DoWork:
                 
             except Exception as e:
                 if self.front_camera_module:
-                    print("Exception occur")
+                    print("Exception in process")
                     self.front_camera_module.close_cam()
                     end_message = "a0s0"
                     self.serial.write(end_message.encode())
@@ -174,6 +175,7 @@ class DoWork:
     def Parking(self):
         """
         1. Search Parking location
+        => 잠깐 정지 후에 Parking Position 연산 => 대표값으로 연산
         2. Ideal Parking Position
         3. Action
         """

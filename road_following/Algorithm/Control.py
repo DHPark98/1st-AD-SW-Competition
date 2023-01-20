@@ -1,5 +1,6 @@
-from utility import find_nearest 
-import numpy as np
+from utility import find_nearest, box_area
+import os
+from pathlib import Path
 
 def control_correction(road_direction, model_direction): # 예측 값과 이미지 기울기 값이 차이가 너무 많이 날 경우 보정
     
@@ -88,6 +89,19 @@ def smooth_direction(bef1, bef2, bef3, cur):
     average = bef3 * 0.1 + bef2 * 0.2 + bef1 * 0.3 + cur * 0.4
     return round(average)
 
-def road_change():
+def moving_log(log): # road change to inside
+    LOG_PATH = os.path.join(str(Path(os.path.dirname(os.path.abspath(__file__))).parent),log)
+    
+    try:
+        FILE = open(LOG_PATH, 'r')
+        messages = FILE.readlines()
+        messages = list(map(lambda s: s.strip(), messages))
+        FILE.close()
+        return messages
+            
+    except Exception as e:
+        print("Cannot find {}".format(log))
+        return None
+    
+    
     pass
-        
