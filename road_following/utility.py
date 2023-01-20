@@ -121,9 +121,9 @@ def object_detection(pred):
     
     if pred_array[0] and pred_array[2]: # stop
         return 0
-    elif pred_array[3]: # 차선 변경
+    elif pred_array[3]:                 # 차선 변경
         return 2
-    else:
+    else:                               # go
         return 1
 
             
@@ -141,23 +141,23 @@ def dominant_gradient(image): # 흑백 이미지에서 gradient 값, 차선 하�
         img_blur = cv2.GaussianBlur(image_original, (0,0),1)
         img_edge = cv2.Canny(img_blur, 110,180)
     except Exception as e:
-        print("Exception occurs in image")
+        print("Exception occurs in img_process")
         exception_image_path = "./exception_image/"
         cv2.imwrite(os.path.join(exception_image_path, "exception_image--{}.png".format(str(uuid.uuid1()))), image)
         return None, None
         
         
     #ppp = True 
-    ppp = False
-
-    if(not ppp):
+    
+    try:
         lines = cv2.HoughLines(img_edge,1,np.pi/180,40)
+
         angles = []
         bottom_flag = np.zeros((640,))
         bottom_idx = 280
         
-        for i in range(len(lines)):
-            for rho, theta in lines[i]:
+        for line in lines:
+            for rho, theta in line:
                 a = np.cos(theta)
                 b = np.sin(theta)
                 x0 = a*rho
@@ -184,34 +184,35 @@ def dominant_gradient(image): # 흑백 이미지에서 gradient 값, 차선 하�
                     else:
                         angle = np.arctan((x2-x1)/(y1-y2))*180/np.pi
                     angles.append(angle)
+        
+    except Exception as e:
+        print("Exception occurs in Line detection")
+        exception_image_path = "./exception_image/"
+        cv2.imwrite(os.path.join(exception_image_path, "exception_image--{}.png".format(str(uuid.uuid1()))), image)
+        return None, None
+
+        
                 
                 # cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
         # print(angles)
         # res = image
-    if(ppp):
-        minLineLength = 100
-        maxLineGap = 0
-        lines = cv2.HoughLinesP(img_edge,1,np.pi/360,100,minLineLength,maxLineGap)
-        if((lines) == None):
-                res = image.copy()
-                return res
-        for i in range(len(lines)):
-            for x1,y1,x2,y2 in lines[i]:
-                cv2.line(image,(x1,y1),(x2,y2),(0,0,255),3)
-                print((x2-x1)/(y2-y1))
-                res = image.copy()
+    # if(ppp):
+    #     minLineLength = 100
+    #     maxLineGap = 0
+    #     lines = cv2.HoughLinesP(img_edge,1,np.pi/360,100,minLineLength,maxLineGap)
+    #     if((lines) == None):
+    #             res = image.copy()
+    #             return res
+    #     for i in range(len(lines)):
+    #         for x1,y1,x2,y2 in lines[i]:
+    #             cv2.line(image,(x1,y1),(x2,y2),(0,0,255),3)
+    #             print((x2-x1)/(y2-y1))
+    #             res = image.copy()
     #lines = cv2.HoughLinesP(img_edge, 2, np.pi/180., 50, minLineLength = 40, maxLineGap = 5)
     
     #lane = lane_detect(image)
-    try:
-        result_idx = np.where(bottom_flag == 1)[0]
-        result = np.median(angles)
-    except Exception as e:
-        print("Exception occurs in image")
-        exception_image_path = "./exception_image/"
-        cv2.imwrite(os.path.join(exception_image_path, "exception_image--{}.png".format(str(uuid.uuid1()))), image)
-        return None, None
-    
+    result_idx = np.where(bottom_flag == 1)[0]
+    result = np.median(angles)
     
     # result = np.average(angles)
     return result, result_idx
@@ -230,6 +231,5 @@ def find_nearest(array, value=320):
     array = np.asarray(array)
     left_val = array[np.max(np.where(array <= value)[0])] if len(np.where(array <= value)[0]) != 0 else None
     right_val = array[np.min(np.where(array > value)[0])] if len(np.where(array > value)[0]) != 0 else None
-    
     
     return left_val, right_val

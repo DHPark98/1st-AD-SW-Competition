@@ -9,19 +9,27 @@ path_cur = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(path_cur + "/yolov5")
 =======
 import matplotlib.pyplot as plt
+<<<<<<< HEAD
 
 path_rf = os.path.dirname(__file__)
 print(path_rf)
 sys.path.append(path_rf + "/yolov5")
 >>>>>>> 98bd515cde1da8e7bccd4a10c4c2cd44a2580c26:road_following/test/yolo_test.py
+=======
+from pathlib import Path
+rf_path = str(Path(os.getcwd()).parent)
+print(rf_path)
+sys.path.append(rf_path)
+>>>>>>> d558718f354929b33466f91784e7854e42cf28f7
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import non_max_suppression
 
 labels_to_names = {1 : "Green", 2 : "Red", 0 : "Crosswalk"}
 
-model = DetectMultiBackend(weights = "./model_weight_file/yolo_weight.pt")
+weight_file_path = os.path.join(rf_path, 'model_weight_file', 'yolo_weight.pt')
+model = DetectMultiBackend(weights = weight_file_path)
 
-img_path = "./test_image/trafficlight.png"
+img_path = os.path.join(rf_path, 'test_images', 'trafficlight.png')
 device = "cuda" if torch.cuda.is_available() else "cpu"
 img = cv2.imread(img_path)
 draw_img = img.copy()

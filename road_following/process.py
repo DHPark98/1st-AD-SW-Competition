@@ -6,8 +6,8 @@ import time
 import torch
 import torchvision.transforms as transform
 import sys
-dir, file = os.path.split(os.path.join(os.path.abspath(__file__)))
-sys.path.append(os.path.join(dir, "yolov5"))
+rf_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(rf_dir, "yolov5"))
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import non_max_suppression
 from utility import roi_cutting, preprocess, show_bounding_box, object_detection, dominant_gradient, cvt_binary, return_road_direction
@@ -91,14 +91,14 @@ class DoWork:
                     
                     if self.detect_weight_file != None: # Detection 했을 경우
                         image = preprocess(cam_img, "test")
-                        
+                        image = image.cpu()
                         pred = self.detect_network(image)
                         pred = non_max_suppression(pred)[0]
                         
-                        draw_img = show_bounding_box(draw_img, pred)
+                        draw_img, = show_bounding_box(draw_img, pred)
 
                         order_flag = object_detection(pred)
-                        
+                    
                     road_gradient, bottom_value = dominant_gradient(roi_img)
                     
                     if (road_gradient, bottom_value) == (None, None): # Gradient가 없을 경우 예외처리(Exception Image)
@@ -107,7 +107,7 @@ class DoWork:
                         self.serial.write(message.encode())
                         print(message)
                         continue
-                        
+                    
                         
                     road_direction = return_road_direction(road_gradient)
                     model_direction = torch.argmax(self.rf_network.run(preprocess(roi_img, mode = "test"))).item() - 7
@@ -126,18 +126,19 @@ class DoWork:
                     
                     elif order_flag == 2:
                         print("Road change")
-                        
                         pass
 
                     message = 'a' + str(self.direction) +  's' + str(self.speed)
                     self.serial.write(message.encode())
                     print(message)
+                    
                     cv2.imshow('VideoCombined_detect', draw_img)
                     cv2.imshow('VideoCombined_rf', roi_img)
                     cv2.imshow('VideoCombined_rf2', preprocess_img)
                     
                     bef_1d, bef_2d, bef_3d = self.direction, bef_1d, bef_2d
                     pass
+                
             except Exception as e:
                 if self.front_camera_module:
                     print("Exception occur")

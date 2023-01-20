@@ -14,8 +14,8 @@ def control_correction(road_direction, model_direction): # 예측 값과 이미�
     return direction
 
 def strengthen_control(road_direction, bottom_value): # 차선에 너무 근접한 경우 방향 수정값 증가
-    right_threshold = (370, 420, 530) ## threshold 값을 4등분해서 각 구간에 들어가면 weight값에 따라 방향 보정
-    left_threshold = (100, 200, 250)
+    right_threshold = (370, 450, 530) ## threshold 값을 4등분해서 각 구간에 들어가면 weight값에 따라 방향 보정
+    left_threshold = (100, 180, 250)
     
     middle_threshold = (100, 200, 300, 340, 440, 540)
     left_idx, right_idx = find_nearest(bottom_value)
@@ -41,9 +41,9 @@ def strengthen_control(road_direction, bottom_value): # 차선에 너무 근접�
             if left_idx < left_threshold[0]:
                 direction = int(road_direction * 0.5)
             elif left_idx >= left_threshold[0] and left_idx < left_threshold[1]:
-                direction = int(road_direction * 1.0)
+                direction = int(road_direction * 1.3)
             elif left_idx >= left_threshold[1] and left_idx < left_threshold[2]:
-                direction = int(road_direction * 1.5)    
+                direction = int(road_direction * 1.6)    
             else:
                 direction = 7
             """차선 근접도를 이용해서 direction 값 조절"""
@@ -85,7 +85,9 @@ def total_control(road_direction, model_direction, bottom_value):
     return final_direction
 
 def smooth_direction(bef1, bef2, bef3, cur):
-    return (bef1 + bef2 + bef3 + cur) / 4
+    average = bef3 * 0.1 + bef2 * 0.2 + bef1 * 0.3 + cur * 0.4
+    return round(average)
 
-    
+def road_change():
+    pass
         
