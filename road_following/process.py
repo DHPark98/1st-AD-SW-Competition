@@ -46,8 +46,9 @@ class DoWork:
             time.sleep(1)
             return True
         
-        except Exception as _:
-            print("Serial Fail")
+        except Exception as e:
+            _, _, tb = sys.exc_info()
+            print("serial start error = {}, error line = {}".format(e, tb.tb_lineno))
             return False
     
     def front_camera_start(self):
@@ -57,8 +58,9 @@ class DoWork:
             print("FRONT Camera open")
             return True
         
-        except Exception as _:
-            print("FRONT Camera Fail")
+        except Exception as e:
+            _, _, tb = sys.exc_info()
+            print("front camera start error = {}, error line = {}".format(e, tb.tb_lineno))
             return False
         
     def rear_camera_start(self):
@@ -68,8 +70,9 @@ class DoWork:
             print("REAR Camera open")
             return True
         
-        except Exception as _:
-            print("REAR Camera Fail")
+        except Exception as e:
+            _, _, tb = sys.exc_info()
+            print("rear camera start error = {}, error line = {}".format(e, tb.tb_lineno))
             return False
         
         
@@ -143,7 +146,8 @@ class DoWork:
                 
             except Exception as e:
                 if self.front_camera_module:
-                    print("Exception in process")
+                    _, _, tb = sys.exc_info()
+                    print("process error = {}, error line = {}".format(e, tb.tb_lineno))
                     self.front_camera_module.close_cam()
                     end_message = "a0s0"
                     self.serial.write(end_message.encode())

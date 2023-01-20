@@ -11,6 +11,8 @@ import time
 from Algorithm.img_preprocess import cvt_binary, total_function
 import matplotlib.pyplot as plt
 import uuid
+import sys
+from datetime import datetime
 
 def get_resistance_value(file):
     dir, filename = os.path.split(file)
@@ -143,14 +145,20 @@ def dominant_gradient(image): # 흑백 이미지에서 gradient 값, 차선 하�
         img_blur = cv2.GaussianBlur(image_original, (0,0),1)
         img_edge = cv2.Canny(img_blur, 110,180)
     except Exception as e:
-        print("Exception occurs in img_process")
+        _, _, tb = sys.exc_info()
+        print("image preprocess error = {}, error line = {}".format(e, tb.tb_lineno))
+        
         exception_image_path = "./exception_image/"
-        cv2.imwrite(os.path.join(exception_image_path, "exception_image--{}.png".format(str(uuid.uuid1()))), image)
+        
+        try:
+            if not os.path.exists(exception_image_path):
+                os.mkdir(exception_image_path)    
+        except OSError:
+            print('Error: Creating dirctory. ' + exception_image_path)
+        
+        cv2.imwrite(os.path.join(exception_image_path, "exception_image--{}.png".format(datetime.now())), image)
         return None, None
         
-        
-    #ppp = True 
-    
     try:
         lines = cv2.HoughLines(img_edge,1,np.pi/180,40)
 
@@ -188,8 +196,14 @@ def dominant_gradient(image): # 흑백 이미지에서 gradient 값, 차선 하�
                     angles.append(angle)
         
     except Exception as e:
-        print("Exception occurs in Line detection")
+        _, _, tb = sys.exc_info()
+        print("gradient detection error = {}, error line = {}".format(e, tb.tb_lineno))
         exception_image_path = "./exception_image/"
+        try:
+            if not os.path.exists(exception_image_path):
+                os.mkdir(exception_image_path)    
+        except OSError:
+            print('Error: Creating dirctory. ' + exception_image_path)
         cv2.imwrite(os.path.join(exception_image_path, "exception_image--{}.png".format(str(uuid.uuid1()))), image)
         return None, None
 
@@ -237,5 +251,7 @@ def find_nearest(array, value=320):
     return left_val, right_val
 
 def is_outside(image): # Is current line outside?
+    
+    
     return True
     pass

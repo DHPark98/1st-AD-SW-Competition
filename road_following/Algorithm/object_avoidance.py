@@ -25,6 +25,7 @@ class avoidance():
             return True
             pass
         except Exception as e:
-            print("Exception in avoidance")
+            _, _, tb = sys.exc_info()
+            print("Trying avoidance error = {}, error line = {}".format(e, tb.tb_lineno))
             return False
             pass

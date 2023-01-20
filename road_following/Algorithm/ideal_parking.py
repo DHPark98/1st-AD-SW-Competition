@@ -27,6 +27,7 @@ class idealparking():
             return True
             pass
         except Exception as e:
-            print("Exception in parking")
+            _, _, tb = sys.exc_info()
+            print("Trying parking error = {}, error line = {}".format(e, tb.tb_lineno))
             return False
             pass
