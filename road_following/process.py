@@ -16,7 +16,7 @@ from Algorithm.img_preprocess import total_function
 from Algorithm.object_avoidance import avoidance
 from Algorithm.ideal_parking import idealparking
 class DoWork:
-    def __init__(self, play_name, front_cam_name, rear_cam_name, rf_weight_file, detect_weight_file = None, parking_log = None):
+    def __init__(self, play_name, front_cam_name, rear_cam_name, rf_weight_file = None, detect_weight_file = None, parking_log = None):
         self.front_camera_module = None
         self.play_type = play_name
         self.cam_num = {"FRONT" : 2, "REAR" : 4}
@@ -105,7 +105,7 @@ class DoWork:
 
                         detect, order_flag = object_detection(pred)
                     
-                    road_gradient, bottom_value = dominant_gradient(roi_img)
+                    road_gradient, bottom_value = dominant_gradient(roi_img, preprocess_img)
                     
                     if (road_gradient, bottom_value) == (None, None): # Gradient가 없을 경우 예외처리(Exception Image)
                         self.direction = 0
@@ -130,7 +130,9 @@ class DoWork:
                         pass
                     
                     elif order_flag == 2: # road change
+                        print("road_change start")
                         self.avoidance_processor.action(preprocess_img)
+                        print("road_change end")
                         pass
 
                     message = 'a' + str(self.direction) +  's' + str(self.speed)
