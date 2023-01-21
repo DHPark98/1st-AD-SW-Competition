@@ -19,7 +19,10 @@ def strengthen_control(road_direction, bottom_value): # 차선에 너무 근접�
     left_threshold = (100, 150, 250, )
     
     middle_threshold = (250, 280, 300, 310, 330, 340, 360, 390)
+    # middle_threshold = (250, 280, 300, 310, 330, 340, 360, 390)
     left_idx, right_idx = find_nearest(bottom_value)
+    print("left_idx: ", left_idx)
+    print("right_idx: ", right_idx)
     
     if left_idx == None or right_idx == None:
         if road_direction < 0:
@@ -27,28 +30,53 @@ def strengthen_control(road_direction, bottom_value): # 차선에 너무 근접�
         else:
             direction = +7
     else:
-        middle_lane = (left_idx + right_idx)/2
+        if road_direction >= 0:
+
+            middle_lane = (left_idx + right_idx)/2
+            
+            if middle_threshold[0] > middle_lane:
+                direction = road_direction - 3
+            elif middle_threshold[0] <= middle_lane and middle_lane < middle_threshold[1]:
+                direction = road_direction
+            elif middle_threshold[1] <= middle_lane and middle_lane < middle_threshold[2]:
+                direction = road_direction 
+            elif middle_threshold[2] <= middle_lane and middle_lane < middle_threshold[3]:
+                direction = road_direction
+            elif middle_threshold[3] <= middle_lane and middle_lane < middle_threshold[4]:
+                direction = road_direction
+            elif middle_threshold[4] <= middle_lane and middle_lane < middle_threshold[5]:
+                direction = road_direction
+            elif middle_threshold[5] <= middle_lane and middle_lane < middle_threshold[6]:
+                direction = road_direction
+            elif middle_threshold[6] <= middle_lane and middle_lane < middle_threshold[7]:
+                direction = road_direction
+            elif middle_threshold[7] <= middle_lane:
+                direction = road_direction + 3
         
-        if middle_threshold[0] > middle_lane:
-            direction = road_direction - 4
-        elif middle_threshold[0] <= middle_lane and middle_lane < middle_threshold[1]:
-            direction = road_direction - 3
-        elif middle_threshold[1] <= middle_lane and middle_lane < middle_threshold[2]:
-            direction = road_direction - 2
-        elif middle_threshold[2] <= middle_lane and middle_lane < middle_threshold[3]:
-            direction = road_direction - 1
-        elif middle_threshold[3] <= middle_lane and middle_lane < middle_threshold[4]:
-            direction = road_direction
-        elif middle_threshold[4] <= middle_lane and middle_lane < middle_threshold[5]:
-            direction = road_direction + 1
-        elif middle_threshold[5] <= middle_lane and middle_lane < middle_threshold[6]:
-            direction = road_direction + 2
-        elif middle_threshold[6] <= middle_lane and middle_lane < middle_threshold[7]:
-            direction = road_direction + 3
-        elif middle_threshold[7] <= middle_lane:
-            direction = road_direction + 4
+        elif road_direction < 0:
+
+            middle_lane = (left_idx + right_idx)/2
             
-            
+            if middle_threshold[0] > middle_lane:
+                direction = road_direction - 3
+            elif middle_threshold[0] <= middle_lane and middle_lane < middle_threshold[1]:
+                direction = road_direction - 2
+            elif middle_threshold[1] <= middle_lane and middle_lane < middle_threshold[2]:
+                direction = road_direction - 2
+            elif middle_threshold[2] <= middle_lane and middle_lane < middle_threshold[3]:
+                direction = road_direction
+            elif middle_threshold[3] <= middle_lane and middle_lane < middle_threshold[4]:
+                direction = road_direction
+            elif middle_threshold[4] <= middle_lane and middle_lane < middle_threshold[5]:
+                direction = road_direction
+            elif middle_threshold[5] <= middle_lane and middle_lane < middle_threshold[6]:
+                direction = road_direction + 2
+            elif middle_threshold[6] <= middle_lane and middle_lane < middle_threshold[7]:
+                direction = road_direction + 2
+            elif middle_threshold[7] <= middle_lane:
+                direction = road_direction + 3
+                
+                
         
     direction = 7 if direction >= 7 else direction
     direction = -7 if direction <= -7 else direction

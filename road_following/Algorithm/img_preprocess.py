@@ -148,7 +148,7 @@ def total_function(image):
     image_gray = cv2.cvtColor(car_hidden, cv2.COLOR_BGR2GRAY)
     
     #ret, thresh = cv2.threshold(image_gray, 20, 255, cv2.THRESH_BINARY) # thresh : 160
-    # cv2.imshow("blur", image_blured)
+    cv2.imshow("blur", image_blured)
     # cv2.imshow("filter", image_filtered)
     # cv2.imshow("noblack", image_no_black)
     # cv2.imshow("stadium", image_stadium)

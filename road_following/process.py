@@ -30,7 +30,7 @@ class DoWork:
         self.serial = serial.Serial()
         self.serial.port = '/dev/ttyUSB0'       ### 아두이노 메가
         self.serial.baudrate = 9600
-        self.speed = 150
+        self.speed = 255
         self.direction = 0
         self.rf_network = model.ResNet18(weight_file = self.rf_weight_file)
         self.detect_network = DetectMultiBackend(weights = detect_weight_file)
@@ -88,6 +88,7 @@ class DoWork:
                 else:
                     cam_img = self.front_camera_module.read()
                     bird_img = bird_convert(cam_img, self.front_cam_name)
+                    cv2.imshow("bird_raw",bird_img)
                     preprocess_img = total_function(bird_img)
                     binary_img = cvt_binary(bird_img)
                     roi_img = roi_cutting(binary_img)
@@ -114,7 +115,8 @@ class DoWork:
                         print(message)
                         continue
                     
-                        
+                    print('grad: ',road_gradient)
+                    print('bottom: ', bottom_value)
                     road_direction = return_road_direction(road_gradient)
                     model_direction = torch.argmax(self.rf_network.run(preprocess(roi_img, mode = "test"))).item() - 7
                     final_direction = total_control(road_direction, model_direction, bottom_value)

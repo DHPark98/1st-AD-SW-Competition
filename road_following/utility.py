@@ -166,35 +166,37 @@ def dominant_gradient(image, pre_image): # 흑백 이미지에서 gradient 값, 
         bottom_flag = np.zeros((640,))
         bottom_idx = 280
         
-        for line in lines:
-            for rho, theta in line:
-                a = np.cos(theta)
-                b = np.sin(theta)
-                x0 = a*rho
-                y0 = b*rho
-                x1 = int(x0 + 1000*(-b))
-                y1 = int(y0+1000*(a))
-                x2 = int(x0 - 1000*(-b))
-                y2 = int(y0 -1000*(a))
-                
-                if y1 > 120 or y2 > 120:
-                    flag_idx = int((x1-x2)/(y1-y2) * (bottom_idx - 1 - y1) + x1)
-                    if flag_idx < 0 or flag_idx >= 640:
-                        continue
-                    bottom_flag[flag_idx] = 1
-
-                
-                
-                
-                if(theta < 1.87 and theta > 1.27):
-                    continue
-                else:
-                    if y1 == y2:
-                        angle = 'inf'
-                    else:
-                        angle = np.arctan((x2-x1)/(y1-y2))*180/np.pi
-                    angles.append(angle)
+        if(not isinstance(lines, type(None))):
+            
+            for line in lines:
+                for rho, theta in line:
+                    a = np.cos(theta)
+                    b = np.sin(theta)
+                    x0 = a*rho
+                    y0 = b*rho
+                    x1 = int(x0 + 1000*(-b))
+                    y1 = int(y0+1000*(a))
+                    x2 = int(x0 - 1000*(-b))
+                    y2 = int(y0 -1000*(a))
                     
+                    if y1 > 120 or y2 > 120:
+                        flag_idx = int((x1-x2)/(y1-y2) * (bottom_idx - 1 - y1) + x1)
+                        if flag_idx < 0 or flag_idx >= 640:
+                            continue
+                        bottom_flag[flag_idx] = 1
+
+                    
+                    
+                    
+                    if(theta < 1.87 and theta > 1.27):
+                        continue
+                    else:
+                        if y1 == y2:
+                            angle = 'inf'
+                        else:
+                            angle = np.arctan((x2-x1)/(y1-y2))*180/np.pi
+                        angles.append(angle)
+                        
         
     except Exception as e:
         _, _, tb = sys.exc_info()
@@ -231,9 +233,12 @@ def dominant_gradient(image, pre_image): # 흑백 이미지에서 gradient 값, 
     try:
     
         result_idx = np.where(bottom_flag == 1)[0]
-        result = np.median(angles)
+        if len(angles) == 0:
+            result = 0
+        else:
+            result = np.median(angles)
 
-        print(angles)
+        #print(angles)
         return result, result_idx
     except Exception as e:
         _, _, tb = sys.exc_info()
