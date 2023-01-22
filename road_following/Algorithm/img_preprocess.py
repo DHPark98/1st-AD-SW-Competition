@@ -13,7 +13,7 @@ def color_filter(image):
     
    
     # green
-    H_green_condition = (35<H) & (H<80)
+    H_green_condition = (35<H) & (H<90)
     S_green_condition = (S>30)
     V_green_condition = V>100
     green_condition = H_green_condition & S_green_condition & V_green_condition
@@ -89,8 +89,10 @@ def only_stadium(image):    # 경기장 밖 지우는 함수
     satisfied[:,639] = True
     check_top_green = len(np.where(satisfied[0])[0])
     check_top_green
-    first_green_x = np.argmax(satisfied, axis = 1).reshape(480, 1)
     
+    first_green_x = np.argmax(satisfied, axis = 1).reshape(480, 1)
+    green_left_x = first_green_x - 20
+    #print(first_green_x)
     x = np.linspace(0,639,640)
     y = np.linspace(0,479,480)
     X,Y = np.meshgrid(x,y)
@@ -98,9 +100,13 @@ def only_stadium(image):    # 경기장 밖 지우는 함수
         green_area = (X > first_green_x) & (first_green_x != 0)
     else:    # 제일 상단 row에 초록색 있음
         green_area = (X > first_green_x)
-        
+
+    white_area = (X <= first_green_x) & (X > green_left_x)
+
+
     HSV_frame[green_area] = [50, 100, 100]
-    
+    HSV_frame[white_area] = [0, 0, 255]
+
     white_scene = np.ones((480,640))
     #cv2.imshow("satisfied", white_scene)
 
@@ -148,11 +154,11 @@ def total_function(image):
     image_gray = cv2.cvtColor(car_hidden, cv2.COLOR_BGR2GRAY)
     
     #ret, thresh = cv2.threshold(image_gray, 20, 255, cv2.THRESH_BINARY) # thresh : 160
-    cv2.imshow("blur", image_blured)
-    # cv2.imshow("filter", image_filtered)
-    # cv2.imshow("noblack", image_no_black)
-    # cv2.imshow("stadium", image_stadium)
-    # cv2.imshow("carhidden", car_hidden)
+    #cv2.imshow("blur", image_blured)
+    cv2.imshow("filter", image_filtered)
+    #cv2.imshow("noblack", image_no_black)
+    #cv2.imshow("stadium", image_stadium)
+    #cv2.imshow("carhidden", car_hidden)
 
 
     return car_hidden 

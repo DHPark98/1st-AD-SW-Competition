@@ -272,7 +272,23 @@ def find_nearest(array, value=320):
     return left_val, right_val
 
 def is_outside(image): # Is current line outside?
-    
-    
-    return True
-    pass
+    HSV_frame = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    H,S,V = cv2.split(HSV_frame)
+
+    bottom_green_x = -1
+    top_green_x = -1
+    up_start_time = time.time()
+
+    H_satisfied = (30 < H) & (H<80)
+    S_satisfied = S==100+2
+    V_satisfied = V==100
+    satisfied = H_satisfied & S_satisfied & V_satisfied
+    satisfied[:,639] = True
+    check_top_green = len(np.where(satisfied[0])[0])
+    first_green_x = np.argmax(satisfied, axis = 1).reshape(480, 1)
+    if np.percentile(first_green_x,5) == 639:
+        return 0
+
+    else:
+        return 1
+    #pass

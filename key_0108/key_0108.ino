@@ -6,11 +6,19 @@ const int FOWARD_RIGHT_2 = 3;
 const int FOWARD_LEFT_1 = 4;
 const int FOWARD_LEFT_2 = 5;
 const int POT = A4;
+const int front_echo = 46;
+const int front_trig = 47;
+
+
+
 const int STEERING_SPEED = 128;
 const int FOWARD_SPEED = 255;
 int angle = 0, straight = 0, str_spd = 100, resistance = 0, mapped_resistance = 0;
-char aaa = 'q', sss = 'w';
+int is_out = 0;
+char aaa = 'q', sss = 'w', ooo = 'e';
 
+long front_distance = 0;
+int avoid_flag = 0;
 void right(){
   analogWrite(STEERING_1, STEERING_SPEED);
   analogWrite(STEERING_2, LOW);
@@ -51,6 +59,21 @@ void hold(){
   analogWrite(FOWARD_LEFT_2, LOW);
 }
 
+long ultra(int TRIG, int ECHO){
+    long distance, duration; 
+    digitalWrite(TRIG, LOW);
+    delayMicroseconds(2);
+    digitalWrite(TRIG, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(TRIG, LOW);
+    duration = pulseIn(ECHO, HIGH);
+    distance = duration*17/1000;
+
+    return distance;
+
+}
+
+
 void setup() {  
   Serial.begin(9600);
   pinMode(POT, INPUT);
@@ -62,10 +85,15 @@ void setup() {
   pinMode(FOWARD_LEFT_2, OUTPUT);
   pinMode(PWM, OUTPUT);
   digitalWrite(PWM, HIGH);
+
+  pinMode(front_echo, INPUT);
+  pinMode(front_trig, OUTPUT);
 }
 
 
 void loop() {
+
+  front_distance = ultra(front_trig, front_echo);
 
   if (Serial.available()){
     if(Serial.peek() == 'a'){
@@ -77,6 +105,11 @@ void loop() {
       sss = Serial.read();
       straight = Serial.parseInt();
     }
+    if(Serial.peek() == 'o'){
+      ooo = Serial.read();
+      is_out = Serial.parseInt();
+    }
+    
     if(0){
     if (angle >= 50 || angle <= -50){
       int straight_temp = angle;
@@ -90,13 +123,16 @@ void loop() {
       angle = angle_temp;
     }
     }
-    if(0){
+    if(1){
     Serial.print("straight: "); 
     Serial.print(sss);
     Serial.println(straight);
     Serial.print(" angle: ");
     Serial.print(aaa);
     Serial.print(angle);
+    Serial.print(" out: ");
+    Serial.print(ooo);
+    Serial.print(is_out);
     }
     resistance = analogRead(POT);
     mapped_resistance = map(resistance, 872, 757, -7, 7);
@@ -106,6 +142,8 @@ void loop() {
     Serial.print(resistance);
     Serial.print(" / ");
     Serial.println(mapped_resistance);
+    Serial.print(" ultra: ");
+    Serial.println(front_distance);
     }
     
     if (straight > 0){
@@ -120,6 +158,23 @@ void loop() {
       reverse(abs(straight));
     }
 
+
+    if((front_distance<100) && (front_distance != 0)){
+      avoid_flag = 1;
+      if (is_out == 1){
+        angle = -7;
+      }
+      else {
+        angle = 7;
+      }
+      
+    }
+    else{
+      if(avoid_flag == 1){
+        avoid_flag = 0;
+        //delay(2);
+      }
+    }
     if (mapped_resistance == angle){
       stay();
     }
@@ -129,8 +184,16 @@ void loop() {
     else if (mapped_resistance < angle){
       right();
     }
+
+    
   }
   else{
+       Serial.print(" Read/Map [A1]/[b]: ");  
+    Serial.print(resistance);
+    Serial.print(" / ");
+    Serial.println(mapped_resistance);
+    Serial.print(" ultra: ");
+    Serial.println(front_distance);
 //    resistance = analogRead(POT);
 //    mapped_resistance = map(resistance, 160, 275, -5, 5);
 //

@@ -10,7 +10,7 @@ rf_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(rf_dir, "yolov5"))
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import non_max_suppression
-from utility import roi_cutting, preprocess, show_bounding_box, object_detection, dominant_gradient, cvt_binary, return_road_direction
+from utility import roi_cutting, preprocess, show_bounding_box, object_detection, dominant_gradient, cvt_binary, return_road_direction, is_outside
 from Algorithm.Control import total_control, smooth_direction
 from Algorithm.img_preprocess import total_function
 from Algorithm.object_avoidance import avoidance
@@ -30,7 +30,7 @@ class DoWork:
         self.serial = serial.Serial()
         self.serial.port = '/dev/ttyUSB0'       ### 아두이노 메가
         self.serial.baudrate = 9600
-        self.speed = 255
+        self.speed = 30
         self.direction = 0
         self.rf_network = model.ResNet18(weight_file = self.rf_weight_file)
         self.detect_network = DetectMultiBackend(weights = detect_weight_file)
@@ -95,6 +95,9 @@ class DoWork:
                     
                     draw_img = cam_img.copy()
                     
+                    outside = int(is_outside(preprocess_img));
+
+                    
                     order_flag = 1
                     
                     if self.detect_weight_file != None: # Detection 했을 경우
@@ -106,15 +109,20 @@ class DoWork:
 
                         detect, order_flag = object_detection(pred)
                     
-                    road_gradient, bottom_value = dominant_gradient(roi_img, preprocess_img)
-                    
+                    # do not cut roi when turn right case
+                    road_gradient, bottom_value = dominant_gradient(preprocess_img, preprocess_img)
+                    if road_gradient < 0:
+                        road_gradient, bottom_value = dominant_gradient(roi_img, preprocess_img)
+                        
+
                     if (road_gradient == None and bottom_value == None): # Gradient가 없을 경우 예외처리(Exception Image)
                         self.direction = 0
-                        message = 'a' + str(self.direction) +  's' + str(self.speed)
+                        message = 'a' + str(self.direction) +  's' + str(self.speed) +'o' + str(outside)
                         self.serial.write(message.encode())
                         print(message)
-                        continue
-                    
+                        continue    
+
+
                     print('grad: ',road_gradient)
                     print('bottom: ', bottom_value)
                     road_direction = return_road_direction(road_gradient)
@@ -137,7 +145,7 @@ class DoWork:
                         print("road_change end")
                         pass
 
-                    message = 'a' + str(self.direction) +  's' + str(self.speed)
+                    message = 'a' + str(self.direction) +  's' + str(self.speed) + 'o' + str(outside)
                     self.serial.write(message.encode())
                     print(message)
                     
@@ -153,7 +161,7 @@ class DoWork:
                     _, _, tb = sys.exc_info()
                     print("process error = {}, error line = {}".format(e, tb.tb_lineno))
                     self.front_camera_module.close_cam()
-                    end_message = "a0s0"
+                    end_message = "a0s0o0"
                     self.serial.write(end_message.encode())
                     self.serial.close()
                 break
@@ -162,19 +170,20 @@ class DoWork:
                 if self.front_camera_module:
                     print("Keyboard Interrupt occur")
                     self.front_camera_module.close_cam()
-                    end_message = "a0s0"
+                    end_message = "a0s0o0"
                     self.serial.write(end_message.encode())
                     self.serial.close()
                 break
                 pass
             
             if cv2.waitKey(25) == ord('f') :
+                end_message = "a0s0o0"
+                self.serial.write(end_message.encode())
+                self.serial.close()
                 if self.front_camera_module:
                     self.front_camera_module.close_cam()
                     cv2.destroyAllWindows()
-                end_message = "a0s0"
-                self.serial.write(end_message.encode())
-                self.serial.close()
+                
                 print("Program Finish")
                 
                 break
@@ -228,7 +237,7 @@ class DoWork:
                                 self.rear_camera_module.close_cam()
                                 self.front_camera_module.close_cam()
                                 cv2.destroyAllWindows()
-                                end_message = "a0s0"
+                                end_message = "a0s0o0"
                                 self.serial.write(end_message.encode())
                                 self.serial.close()
                                 print("Parking Finish")
@@ -241,7 +250,7 @@ class DoWork:
                     print("Exception occur")
                     self.front_camera_module.close_cam()
                     self.rear_camera_module.close_cam()
-                    end_message = "a0s0"
+                    end_message = "a0s0o0"
                     self.serial.write(end_message.encode())
                     self.serial.close()
                 break
@@ -251,7 +260,7 @@ class DoWork:
                     print("Keyboard Interrupt occur")
                     self.front_camera_module.close_cam()
                     self.rear_camera_module.close_cam()
-                    end_message = "a0s0"
+                    end_message = "a0s0o0"
                     self.serial.write(end_message.encode())
                     self.serial.close()
                 break
@@ -262,7 +271,7 @@ class DoWork:
                     self.rear_camera_module.close_cam()
                     self.front_camera_module.close_cam()
                     cv2.destroyAllWindows()
-                end_message = "a0s0"
+                end_message = "a0s0o0"
                 self.serial.write(end_message.encode())
                 self.serial.close()
                 print("Program Finish")
