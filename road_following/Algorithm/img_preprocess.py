@@ -21,13 +21,13 @@ def color_filter(image):
     S[green_condition] = 100
     V[green_condition] = 100
     # white
-    V_white_condition = V>165
+    V_white_condition = V>200#165
     white_condition = V_white_condition
     H[V_white_condition] = 0
     S[V_white_condition] = 0
     V[V_white_condition] = 255
     # gray
-    V_gray_condition = (115<V) & (V<=165)
+    V_gray_condition = (115<V) & (V<=200)#165)
     # S_gray_condition = S<25
     gray_condition = V_gray_condition #& S_gray_condition
     H[gray_condition] = 120
@@ -101,7 +101,7 @@ def only_stadium(image):    # 경기장 밖 지우는 함수
     else:    # 제일 상단 row에 초록색 있음
         green_area = (X > first_green_x)
 
-    white_area = (X <= first_green_x) & (X > green_left_x)
+    white_area = (X <= first_green_x) & (X > green_left_x) & (X < 619)
 
 
     HSV_frame[green_area] = [50, 100, 100]
@@ -127,8 +127,8 @@ def hide_car_head(image):
     y = np.linspace(0,479,480)
     X,Y = np.meshgrid(x,y)
     
-    a = 132
-    b = 50
+    a = 148
+    b = 56
     elipse_eq = b*b*(X-320)*(X-320) + a*a*(Y-479)*(Y-479) < a*a*b*b
  
     H[elipse_eq] = 120
@@ -145,6 +145,8 @@ def hide_car_head(image):
 
 def total_function(image):
     image_blured = cv2.GaussianBlur(image, (0,0), 5)
+    if (0):
+        image_blured = hide_car_head(image_blured)
     image_filtered = color_filter(image_blured)
     image_no_black = remove_black(image_filtered)
     image_stadium = only_stadium(image_no_black)
@@ -154,7 +156,7 @@ def total_function(image):
     image_gray = cv2.cvtColor(car_hidden, cv2.COLOR_BGR2GRAY)
     
     #ret, thresh = cv2.threshold(image_gray, 20, 255, cv2.THRESH_BINARY) # thresh : 160
-    #cv2.imshow("blur", image_blured)
+    cv2.imshow("blur", image_blured)
     cv2.imshow("filter", image_filtered)
     #cv2.imshow("noblack", image_no_black)
     #cv2.imshow("stadium", image_stadium)

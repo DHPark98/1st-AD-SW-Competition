@@ -30,7 +30,7 @@ class DoWork:
         self.serial = serial.Serial()
         self.serial.port = '/dev/ttyUSB0'       ### 아두이노 메가
         self.serial.baudrate = 9600
-        self.speed = 30
+        self.speed = 150
         self.direction = 0
         self.rf_network = model.ResNet18(weight_file = self.rf_weight_file)
         self.detect_network = DetectMultiBackend(weights = detect_weight_file)

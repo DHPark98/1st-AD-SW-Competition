@@ -93,7 +93,7 @@ void setup() {
 
 void loop() {
 
-  front_distance = ultra(front_trig, front_echo);
+  //front_distance = ultra(front_trig, front_echo);
 
   if (Serial.available()){
     if(Serial.peek() == 'a'){

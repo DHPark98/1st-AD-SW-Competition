@@ -35,34 +35,34 @@ def strengthen_control(road_direction, bottom_value): # 차선에 너무 근접�
             middle_lane = (left_idx + right_idx)/2
             
             if middle_threshold[0] > middle_lane:
-                direction = road_direction - 3
+                direction = road_direction - 4
             elif middle_threshold[0] <= middle_lane and middle_lane < middle_threshold[1]:
-                direction = road_direction
+                direction = road_direction - 3
             elif middle_threshold[1] <= middle_lane and middle_lane < middle_threshold[2]:
-                direction = road_direction 
+                direction = road_direction - 2
             elif middle_threshold[2] <= middle_lane and middle_lane < middle_threshold[3]:
-                direction = road_direction
+                direction = road_direction - 1
             elif middle_threshold[3] <= middle_lane and middle_lane < middle_threshold[4]:
                 direction = road_direction
             elif middle_threshold[4] <= middle_lane and middle_lane < middle_threshold[5]:
-                direction = road_direction
+                direction = road_direction + 1
             elif middle_threshold[5] <= middle_lane and middle_lane < middle_threshold[6]:
-                direction = road_direction
+                direction = road_direction + 2
             elif middle_threshold[6] <= middle_lane and middle_lane < middle_threshold[7]:
-                direction = road_direction
-            elif middle_threshold[7] <= middle_lane:
                 direction = road_direction + 3
+            elif middle_threshold[7] <= middle_lane:
+                direction = road_direction + 4
         
         elif road_direction < 0:
 
             middle_lane = (left_idx + right_idx)/2
             
             if middle_threshold[0] > middle_lane:
-                direction = road_direction - 3
+                direction = road_direction #- 3
             elif middle_threshold[0] <= middle_lane and middle_lane < middle_threshold[1]:
-                direction = road_direction - 2
+                direction = road_direction #- 2
             elif middle_threshold[1] <= middle_lane and middle_lane < middle_threshold[2]:
-                direction = road_direction - 2
+                direction = road_direction #- 2
             elif middle_threshold[2] <= middle_lane and middle_lane < middle_threshold[3]:
                 direction = road_direction
             elif middle_threshold[3] <= middle_lane and middle_lane < middle_threshold[4]:
@@ -70,11 +70,11 @@ def strengthen_control(road_direction, bottom_value): # 차선에 너무 근접�
             elif middle_threshold[4] <= middle_lane and middle_lane < middle_threshold[5]:
                 direction = road_direction
             elif middle_threshold[5] <= middle_lane and middle_lane < middle_threshold[6]:
-                direction = road_direction + 2
+                direction = road_direction #+ 2
             elif middle_threshold[6] <= middle_lane and middle_lane < middle_threshold[7]:
-                direction = road_direction + 2
+                direction = road_direction #+ 2
             elif middle_threshold[7] <= middle_lane:
-                direction = road_direction + 3
+                direction = road_direction #+ 3
                 
                 
         
