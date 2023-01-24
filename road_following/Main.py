@@ -13,11 +13,13 @@ if __name__ == '__main__':
                 processor.Driving()
 
     elif play_name == "Parking":
-        processor = process.DoWork(play_name = "Parking", front_cam_name = "FRONT", rear_cam_name = "REAR", 
+        processor = process.DoWork(play_name = "Parking", front_cam_name = "FRONT", rear_cam_name = "REAR",
                                    detect_weight_file="./model_weight_file/yolo_weight.pt", parking_log = None)
         serial_result = processor.serial_start()
         if serial_result == True:
             front_camera_opened = processor.front_camera_start()
             rear_camera_opened = processor.rear_camera_start()
+            lidar_opened = processor.lidar_start()
+            print("Lidar: ", lidar_opened)
             if front_camera_opened == True and rear_camera_opened == True:
                 processor.Parking()

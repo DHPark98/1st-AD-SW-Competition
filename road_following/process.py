@@ -1,4 +1,5 @@
 import Devices.Camera
+import Devices.rplidar
 from Algorithm.BirdEyeConverter import *
 from Networks import model
 import serial
@@ -22,7 +23,6 @@ class DoWork:
         self.front_camera_module = None
         self.play_type = play_name
         self.cam_num = {"FRONT" : 2, "REAR" : 4}
-        
         self.front_cam_name = front_cam_name
         self.rear_cam_name = rear_cam_name
         
@@ -34,10 +34,13 @@ class DoWork:
         self.serial.baudrate = 9600
         self.speed = 200
         self.direction = 0
-        self.rf_network = model.ResNet18(weight_file = self.rf_weight_file)
+        if play_name == "Driving":
+            self.rf_network = model.ResNet18(weight_file = self.rf_weight_file)
         self.detect_network = DetectMultiBackend(weights = detect_weight_file)
         self.labels_to_names = {0 : "Crosswalk", 1 : "Green", 2 : "Red", 3 : "Car"}
         
+        self.lidar_port = '/dev/ttyUSB1'
+
         self.avoidance_processor = avoidance(self.serial, left_log='left_move.txt',right_log='right_move.txt')
         self.parking_log = parking_log
         self.parking_processor = idealparking(self.serial, self.parking_log)
@@ -78,7 +81,25 @@ class DoWork:
             print("rear camera start error = {}, error line = {}".format(e, tb.tb_lineno))
             return False
         
-        
+    def lidar_start(self):
+        try:
+            self.lidar_module = Devices.rplidar.RPLidar(self.lidar_port)
+            self.lidar_info = self.lidar_module.get_info()
+            print(self.lidar_info)
+
+            self.lidar_health = self.lidar_module.get_health()
+            print(self.lidar_health)
+            return True
+        except:
+            return False
+    
+    def lidar_finish(self):
+        self.lidar_module.stop()
+        self.lidar_module.stop_motor()
+        self.lidar_module.disconnect()
+ 
+
+
     def Driving(self):
         bef_1d, bef_2d, bef_3d = 0,0,0
         
@@ -209,6 +230,34 @@ class DoWork:
         2. Ideal Parking Position
         3. Action
         """
+        detect_queue = 0
+        self.lidar_start()
+        for i, scan in enumerate(self.lidar_module.iter_scans()):
+            #print('%d: Got %d measurments' % (i, len(scan)))
+
+            scan = np.array(scan, dtype=np.int16)
+            #scan_right = scan[np.where(s)]
+            # print(scan)
+            lidar_detect_condition = (scan[:,1]<305) & (scan[:,1]>275)
+            #print(scan[np.where(lidar_detect_condition)])
+            if len(np.where(lidar_detect_condition)[0]) > 0:
+                detect_queue *= 2
+                detect_queue += 1
+                detect_queue %= 32
+            else:
+                detect_queue *= 2
+                detect_queue %= 32
+            #print("detect queue: ", detect_queue)
+            if detect_queue == 0:
+                print("object not detected")
+            else:
+                print("object detected")
+
+            if i > 500:
+                break
+
+        self.lidar_finish()
+
 
         while True:
             try:
