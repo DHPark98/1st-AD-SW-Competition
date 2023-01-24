@@ -4,13 +4,13 @@ from pathlib import Path
 
 def control_correction(road_direction, model_direction): # 예측 값과 이미지 기울기 값이 차이가 너무 많이 날 경우 보정
     
-    if abs(road_direction - model_direction) <= 2:
+    if abs(road_direction - model_direction) <= 1:
         direction = model_direction
     else:
         if road_direction < model_direction:
-            direction = road_direction + (abs(road_direction - model_direction) - 2)
+            direction = road_direction + (abs(road_direction - model_direction) - 1)
         else:
-            direction = road_direction - (abs(road_direction - model_direction) - 2)
+            direction = road_direction - (abs(road_direction - model_direction) - 1)
     
     return direction
 

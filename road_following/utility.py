@@ -166,34 +166,37 @@ def dominant_gradient(image, pre_image): # 흑백 이미지에서 gradient 값, 
         bottom_flag = np.zeros((640,))
         bottom_idx = 280
         
-        for line in lines:
-            for rho, theta in line:
-                a = np.cos(theta)
-                b = np.sin(theta)
-                x0 = a*rho
-                y0 = b*rho
-                x1 = int(x0 + 1000*(-b))
-                y1 = int(y0+1000*(a))
-                x2 = int(x0 - 1000*(-b))
-                y2 = int(y0 -1000*(a))
-                
-                if y1 > 120 or y2 > 120:
-                    flag_idx = int((x1-x2)/(y1-y2) * (bottom_idx - 1 - y1) + x1)
-                    if flag_idx < 0 or flag_idx >= 640:
-                        continue
-                    bottom_flag[flag_idx] = 1
+        if(not isinstance(lines, type(None))):
+            
+            for line in lines:
+                for rho, theta in line:
+                    a = np.cos(theta)
+                    b = np.sin(theta)
+                    x0 = a*rho
+                    y0 = b*rho
+                    x1 = int(x0 + 1000*(-b))
+                    y1 = int(y0+1000*(a))
+                    x2 = int(x0 - 1000*(-b))
+                    y2 = int(y0 -1000*(a))
+                    
+                    if y1 > 120 or y2 > 120:
+                        flag_idx = int((x1-x2)/(y1-y2) * (bottom_idx - 1 - y1) + x1)
+                        if flag_idx < 0 or flag_idx >= 640:
+                            continue
+                        bottom_flag[flag_idx] = 1
 
-                
-                
-                
-                if(theta < 1.87 and theta > 1.27):
-                    continue
-                else:
-                    if y1 == y2:
-                        angle = 'inf'
+                    
+                    
+                    
+                    if(theta < 1.87 and theta > 1.27):
+                        continue
                     else:
-                        angle = np.arctan((x2-x1)/(y1-y2))*180/np.pi
-                    angles.append(angle)
+                        if y1 == y2:
+                            angle = 'inf'
+                        else:
+                            angle = np.arctan((x2-x1)/(y1-y2))*180/np.pi
+                        angles.append(angle)
+                        
         
     except Exception as e:
         _, _, tb = sys.exc_info()
@@ -204,7 +207,7 @@ def dominant_gradient(image, pre_image): # 흑백 이미지에서 gradient 값, 
                 os.mkdir(exception_image_path)    
         except OSError:
             print('Error: Creating dirctory. ' + exception_image_path)
-        cv2.imwrite(os.path.join(exception_image_path, "exception_image--{}.png".format(str(uuid.uuid1()))), image)
+        cv2.imwrite(os.path.join(exception_image_path, "exception_image--{}.png".format(str(uuid.uuid1()))), pre_image)
         return None, None
 
         
@@ -227,11 +230,29 @@ def dominant_gradient(image, pre_image): # 흑백 이미지에서 gradient 값, 
     #lines = cv2.HoughLinesP(img_edge, 2, np.pi/180., 50, minLineLength = 40, maxLineGap = 5)
     
     #lane = lane_detect(image)
-    result_idx = np.where(bottom_flag == 1)[0]
-    result = np.median(angles)
+    try:
     
+        result_idx = np.where(bottom_flag == 1)[0]
+        if len(angles) == 0:
+            result = 0
+        else:
+            result = np.median(angles)
+
+        #print(angles)
+        return result, result_idx
+    except Exception as e:
+        _, _, tb = sys.exc_info()
+        print("gradient detection error = {}, error line = {}".format(e, tb.tb_lineno))
+        exception_image_path = "./exception_image/"
+        try:
+            if not os.path.exists(exception_image_path):
+                os.mkdir(exception_image_path)    
+        except OSError:
+            print('Error: Creating dirctory. ' + exception_image_path)
+        cv2.imwrite(os.path.join(exception_image_path, "exception_image--{}.png".format(str(uuid.uuid1()))), pre_image)
+        return None, None
     # result = np.average(angles)
-    return result, result_idx
+    
 
 
 def return_road_direction(road_gradient):
@@ -251,7 +272,23 @@ def find_nearest(array, value=320):
     return left_val, right_val
 
 def is_outside(image): # Is current line outside?
-    
-    
-    return True
-    pass
+    HSV_frame = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    H,S,V = cv2.split(HSV_frame)
+
+    bottom_green_x = -1
+    top_green_x = -1
+    up_start_time = time.time()
+
+    H_satisfied = (30 < H) & (H<80)
+    S_satisfied = S==100+2
+    V_satisfied = V==100
+    satisfied = H_satisfied & S_satisfied & V_satisfied
+    satisfied[:,639] = True
+    check_top_green = len(np.where(satisfied[0])[0])
+    first_green_x = np.argmax(satisfied, axis = 1).reshape(480, 1)
+    if np.percentile(first_green_x,5) == 639:
+        return 0
+
+    else:
+        return 1
+    #pass
