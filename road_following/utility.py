@@ -75,6 +75,15 @@ def return_augmented_images(image, style):
 def roi_cutting(image):
     image = image[200:]
     return image
+    # x = np.linspace(0,639,640)
+    # y = np.linspace(0,479,480)
+    # X,Y = np.meshgrid(x,y)    
+    # equation = 200*X - 640 * Y + 640*100 > 0
+    # image[equation] = 0
+
+    return image
+
+                                                                                                             
 
 def preprocess(image, mode, device = "cuda"):
     
@@ -160,7 +169,7 @@ def dominant_gradient(image, pre_image): # 흑백 이미지에서 gradient 값, 
         return None, None
         
     try:
-        lines = cv2.HoughLines(img_edge,1,np.pi/180,40)
+        lines = cv2.HoughLines(img_edge,1,np.pi/180,30)
 
         angles = []
         bottom_flag = np.zeros((640,))
@@ -256,7 +265,8 @@ def dominant_gradient(image, pre_image): # 흑백 이미지에서 gradient 값, 
 
 
 def return_road_direction(road_gradient):
-    ret_direction = int(road_gradient / 5)
+    f = lambda x : 7/64000*x**3
+    ret_direction = int(f(road_gradient))
     
     ret_direction = 7 if ret_direction >= 7 else ret_direction
     ret_direction = -7 if ret_direction <= -7 else ret_direction
@@ -264,7 +274,7 @@ def return_road_direction(road_gradient):
     return ret_direction
         
 
-def find_nearest(array, value=320):
+def find_nearest(array, value=315):
     array = np.asarray(array)
     left_val = array[np.max(np.where(array <= value)[0])] if len(np.where(array <= value)[0]) != 0 else None
     right_val = array[np.min(np.where(array > value)[0])] if len(np.where(array > value)[0]) != 0 else None
