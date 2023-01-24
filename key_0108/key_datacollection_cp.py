@@ -87,7 +87,7 @@ def receive_from_Ard():     # Argument : ser ?
 if __name__ == '__main__':
 
     
-    path = '/home/skkcar/Desktop/contest/data_img/exception/'     ###
+    path = '/home/skkcar/Desktop/contest/data_img/car_detection/'     ###
 
     try:
         if not os.path.exists(path):
@@ -172,12 +172,12 @@ if __name__ == '__main__':
             #direction_cur = receive_from_Ard()
             direction_cur = 0
 
-            img_f_bird = total_function(img_f, 'front')     # image processed front
+            # img_f_bird = total_function(img_f, 'front')     # image processed front
             #img_b_bird = total_function(img_b, 'back')     # image processed back
             
-            #cv2.imshow('Video_f', img_f)
-            #cv2.imshow('Video_b', img_b)            
-            cv2.imshow('Video_f_bird', img_f_bird)
+            cv2.imshow('Video_f', img_f)
+            cv2.imshow('Video_b', img_b)            
+            # cv2.imshow('Video_f_bird', img_f)
             # print(img_p_f.shape)
 
         # Write(Store) Image
@@ -193,9 +193,10 @@ if __name__ == '__main__':
             #img_b_title = "{0}b--{1}--{2}--{3}".format(path, str(message), time_stamp, uuid_cur)
             # cv2.imwrite(path+img_b_title+".png", img_b)
             
-        
+            detection_obj = "car"
             img_f_bird_title = "{0}f_bird--{1}--{2}--{3}".format(path, str(message), time_stamp, uuid_cur)
-            cv2.imwrite(img_f_bird_title + ".png", img_f_bird)
+            yolo_title = "{}{}--{}--{}".format(path, detection_obj, time_stamp, uuid_cur)
+            cv2.imwrite(yolo_title + ".png", img_f)
             
             time_prev_write = time.time()
 

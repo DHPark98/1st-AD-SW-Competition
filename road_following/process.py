@@ -10,7 +10,9 @@ rf_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(rf_dir, "yolov5"))
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import non_max_suppression
-from utility import roi_cutting, preprocess, show_bounding_box, object_detection, dominant_gradient, cvt_binary, return_road_direction, is_outside
+from utility import (roi_cutting, preprocess, show_bounding_box, 
+                    object_detection, dominant_gradient, cvt_binary, 
+                    return_road_direction, is_outside, box_area)
 from Algorithm.Control import total_control, smooth_direction
 from Algorithm.img_preprocess import total_function
 from Algorithm.object_avoidance import avoidance
@@ -30,7 +32,7 @@ class DoWork:
         self.serial = serial.Serial()
         self.serial.port = '/dev/ttyUSB0'       ### 아두이노 메가
         self.serial.baudrate = 9600
-        self.speed = 150
+        self.speed = 200
         self.direction = 0
         self.rf_network = model.ResNet18(weight_file = self.rf_weight_file)
         self.detect_network = DetectMultiBackend(weights = detect_weight_file)
@@ -39,6 +41,7 @@ class DoWork:
         self.avoidance_processor = avoidance(self.serial, left_log='left_move.txt',right_log='right_move.txt')
         self.parking_log = parking_log
         self.parking_processor = idealparking(self.serial, self.parking_log)
+        self.parking_stage = 1
     def serial_start(self):
         try:
             self.serial.open()
@@ -95,7 +98,7 @@ class DoWork:
                     
                     draw_img = cam_img.copy()
                     
-                    outside = int(is_outside(preprocess_img));
+                    outside = int(is_outside(preprocess_img))
 
                     
                     order_flag = 1
@@ -110,9 +113,13 @@ class DoWork:
                         detect, order_flag = object_detection(pred)
                     
                     # do not cut roi when turn right case
-                    road_gradient, bottom_value = dominant_gradient(preprocess_img, preprocess_img)
-                    if road_gradient < 0:
-                        road_gradient, bottom_value = dominant_gradient(roi_img, preprocess_img)
+                    
+                    # if(0):
+                    #     road_gradient, bottom_value = dominant_gradient(preprocess_img, preprocess_img)
+                    #     if road_gradient < 0:
+                    #         road_gradient, bottom_value = dominant_gradient(roi_img, preprocess_img)
+
+                    road_gradient, bottom_value = dominant_gradient(roi_img, preprocess_img)
                         
 
                     if (road_gradient == None and bottom_value == None): # Gradient가 없을 경우 예외처리(Exception Image)
@@ -140,9 +147,14 @@ class DoWork:
                         pass
                     
                     elif order_flag == 2: # road change
-                        print("road_change start")
-                        self.avoidance_processor.action(preprocess_img)
-                        print("road_change end")
+                        print("road change!")
+                        if is_outside(preprocess_img) == True:
+                            self.direction = -7
+                        else:
+                            self.direction = 7
+
+                        # self.avoidance_processor.action(preprocess_img)
+                        
                         pass
 
                     message = 'a' + str(self.direction) +  's' + str(self.speed) + 'o' + str(outside)
@@ -197,7 +209,7 @@ class DoWork:
         2. Ideal Parking Position
         3. Action
         """
-        
+
         while True:
             try:
                 if self.front_camera_module == None or self.rear_camera_module == None:
@@ -205,28 +217,26 @@ class DoWork:
                     break
                     pass
                 else:
-                    state = 1
                     
-                    if state == 1:
+                    if  self.parking_stage == 1:
                         """
                         직진하며 주차 공간 탐색
+                        라이다로 어느 위치에 주차할지 탐색
                         """
                         if True:
-                            """주차 공간 탐색 성공"""
-                            parking_state = 2 # 1, 2, 3, 4 중에 하나
-                            state = 2
+                            self.parking_stage = 2
                             pass
                         pass
-                    elif state == 2:
+                    elif    self.parking_stage == 2:
                         """
                         Ideal Parking Location으로 이동
                         """
                         if True:
                             """"Ideal Location 이동 성공"""
-                            state = 3
+                            self.parking_stage = 3
                             pass
                         pass
-                    elif state == 3:
+                    elif    self.parking_stage == 3:
                         """
                         parking action
                         """

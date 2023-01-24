@@ -16,6 +16,7 @@ class avoidance():
         try:
             if is_outside(img) == True:
                 messages = moving_log(self.left_log)
+                
             else:
                 messages = moving_log(self.right_log)
                 
