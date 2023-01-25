@@ -98,7 +98,16 @@ def preprocess(image, mode, device = "cuda"):
         image = image[None, ...]
         return image
 
+def box_center(box):
+    if box == None:
+        return None
+    else:
+        p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
+        return ((p1[0] + p2[0])/2, (p1[1] + p2[1])/2)
+
 def box_area(box):
+    if box == None:
+        return 0
     p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
     box_area = (p2[0] - p1[0]) * (p2[1] - p1[1])
     return box_area
@@ -132,7 +141,8 @@ def object_detection(pred): # pred 중 class별로 가장 큰 bbox return
             else:
                 pred_array[cls] = box
                 
-        elif cls == 3 and box[1][1] > car_bottom_threshold: # find object(car)
+        elif (cls == 3 and box[1][1] > car_bottom_threshold and
+                box_area(box) > bbox_threshold[cls]): # find object(car)
             pred_array[cls] = box
                 
     if pred_array[0] != None and pred_array[2] != None:
@@ -306,3 +316,41 @@ def is_outside(image): # Is current line outside?
     else:
         return 1
     #pass
+
+def front_line_detect(image):
+    image_original = image.copy()
+    try:
+        img_blur = cv2.GaussianBlur(image_original, (0,0),1)
+        img_edge = cv2.Canny(img_blur, 110,180)
+        lines = cv2.HoughLines(img_edge,1,np.pi/180,30)
+
+        angles = []
+        
+        if(not isinstance(lines, type(None))):
+            
+            for line in lines:
+                for rho, theta in line:
+                    a = np.cos(theta)
+                    b = np.sin(theta)
+                    x0 = a*rho
+                    y0 = b*rho
+                    x1 = int(x0 + 1000*(-b))
+                    y1 = int(y0+1000*(a))
+                    x2 = int(x0 - 1000*(-b))
+                    y2 = int(y0 -1000*(a))
+                if y1 == y2:
+                    angle = 'inf'
+                else:
+                    angle = np.arctan((x2-x1)/(y1-y2))*180/np.pi
+                if -45 < angle and angle < 45:
+                    pass
+                else:
+                    angles.append(angle)
+        
+        return np.median(angles)
+                        
+
+    except Exception as e:
+        _, _, tb = sys.exc_info()
+        print("front line detection error = {}, error line = {}".format(e, tb.tb_lineno))
+        return None
