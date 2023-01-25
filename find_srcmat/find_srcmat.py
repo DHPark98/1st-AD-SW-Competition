@@ -6,16 +6,19 @@ import os
 
 win_name = "scanning"
 path_cur = os.path.dirname(os.path.abspath(__file__))
-FB = input('Front of Back Camera ? (\'f\' or \'b\')')
-if FB == 'f':
+cam_name = input("Enter Camera Name (f:Front, r:Rear) : ")
+image_width = 640
+if cam_name == 'f':
     img_fullpath = path_cur + "/data_img_srcmat/front_img_for_srcmat.png"
     pkl_fullpath = path_cur + "/front_perspect_param.pkl"
-elif FB == 'b':
+    image_height = 480
+elif cam_name == 'r':
     img_fullpath = path_cur + "/data_img_srcmat/back_img_for_srcmat.png"
     pkl_fullpath = path_cur + "/back_perspect_param.pkl"
+    image_height = 360
 
 img = cv2.imread(img_fullpath)
-img = cv2.resize(img, (640, 480))
+img = cv2.resize(img, (image_width, image_height))
 rows, cols = img.shape[:2]
 draw = img.copy()
 pts_cnt = 0

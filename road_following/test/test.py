@@ -1,10 +1,8 @@
-import os
-import sys
-from pathlib import Path
-GLOBAL_PATH = str(Path(os.getcwd()).parent.parent)
-sys.path.append(GLOBAL_PATH)
-from Global.LogManager import Log
+a=1
 
-log = Log()
-
-log.debug()
+def A(x):
+    global a
+    a = 2
+    
+A(a)
+print(a)
