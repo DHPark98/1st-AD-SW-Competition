@@ -232,6 +232,7 @@ class DoWork:
 
 
         while True:
+            i = 1
             try:
                 if self.front_camera_module == None or self.rear_camera_module == None:
                     print("Please Check Camera module")
@@ -244,30 +245,38 @@ class DoWork:
                 else:
                     self.lidar_start()
                     car_location = 'left'
+                    
                     if  self.parking_stage == 1:
                         """
                         직진하며 주차 공간 탐색
                         라이다로 어느 위치에 주차할지 탐색
                         """
                         detect_queue = 0
-                        for i, scan in enumerate(self.lidar_module.iter_scans()):
-                            scan = np.array(scan, dtype=np.int16)
-                            lidar_detect_condition = (scan[:,1]<305) & (scan[:,1]>275)
-                            if len(np.where(lidar_detect_condition)[0]) > 0:
-                                detect_queue *= 2
-                                detect_queue += 1
-                                detect_queue %= 32
-                            else:
-                                detect_queue *= 2
-                                detect_queue %= 32
-                            #print("detect queue: ", detect_queue)
-                            if detect_queue == 0:
-                                print("object not detected")
-                            else:
-                                print("object detected")
 
-                            if i > 500:
-                                break
+                        cam_img = self.front_camera_module.read()
+                        cv2.imshow("video", cam_img)
+                        scan = self.lidar_module.iter_scans()
+                        # for i, scan in enumerate(self.lidar_module.iter_scans()):
+                        scan = np.array(scan, dtype=np.int16)
+                        print(scan)
+                        lidar_detect_condition = (scan[:,1]<305) & (scan[:,1]>275)
+                        if len(np.where(lidar_detect_condition)[0]) > 0:
+                            detect_queue *= 2
+                            detect_queue += 1
+                            detect_queue %= 32
+                        else:
+                            detect_queue *= 2
+                            detect_queue %= 32
+                        cv2.imshow()
+                            #print("detect queue: ", detect_queue)
+                            # if detect_queue == 0:
+                            #     print("object not detected")
+                            # else:
+                            #     print("object detected")
+                        i+=1
+                        if i > 500:
+                            i = 1
+                            break
                         self.direction = 0
                         message = 'a' + str(self.direction) +  's' + str(self.speed)
                         self.serial.write(message.encode())
@@ -276,46 +285,46 @@ class DoWork:
                             self.parking_stage = 2
                             pass
                         pass
-                    elif self.parking_stage == 2:
-                        """
-                        Parking start
-                        """
-                        if car_location == 'left':
-                            self.direction = -7
-                            self.speed = -30
-                        else:
-                            self.direction = 7
-                            self.speed = 30
-                        message = 'a' + str(self.direction) +  's' + str(self.speed)
-                        self.serial.write(message.encode())
+                    # elif self.parking_stage == 2:
+                    #     """
+                    #     Parking start
+                    #     """
+                    #     if car_location == 'left':
+                    #         self.direction = -7
+                    #         self.speed = -30
+                    #     else:
+                    #         self.direction = 7
+                    #         self.speed = 30
+                    #     message = 'a' + str(self.direction) +  's' + str(self.speed)
+                    #     self.serial.write(message.encode())
                             
-                        if True:
-                            """"Ideal Location 이동 성공"""
-                            self.parking_stage = 3
-                            pass
-                        pass
-                    elif self.parking_stage == 3:
-                        """
-                        parking action
-                        """
-                        self.parking_processor.action(parking_location = 3)
-                        if True:
-                            """paking finish"""
-                            if self.front_camera_module and self.rear_camera_module:
-                                self.rear_camera_module.close_cam()
-                                self.front_camera_module.close_cam()
-                                cv2.destroyAllWindows()
-                                end_message = "a0s0o0"
-                                self.serial.write(end_message.encode())
-                                self.serial.close()
-                                self.lidar_finish()
-                                print("Parking Finish")
+                    #     if True:
+                    #         """"Ideal Location 이동 성공"""
+                    #         self.parking_stage = 3
+                    #         pass
+                    #     pass
+                    # elif self.parking_stage == 3:
+                    #     """
+                    #     parking action
+                    #     """
+                    #     self.parking_processor.action(parking_location = 3)
+                    #     if True:
+                    #         """paking finish"""
+                    #         if self.front_camera_module and self.rear_camera_module:
+                    #             self.rear_camera_module.close_cam()
+                    #             self.front_camera_module.close_cam()
+                    #             cv2.destroyAllWindows()
+                    #             end_message = "a0s0o0"
+                    #             self.serial.write(end_message.encode())
+                    #             self.serial.close()
+                    #             self.lidar_finish()
+                    #             print("Parking Finish")
                     
-                                break
-                        pass
-                    pass
+                    #             break
+                    #     pass
+                    # pass
             except Exception as e:
-                if self.front_camera_module and self.rear_camera_module:
+                if self.front_camera_module and self.rear_camera_module and self.lidar_module:
                     print("Exception occur")
                     self.front_camera_module.close_cam()
                     self.rear_camera_module.close_cam()
@@ -326,7 +335,7 @@ class DoWork:
                 break
                 pass
             except KeyboardInterrupt:
-                if self.front_camera_module and self.rear_camera_module:
+                if self.front_camera_module and self.rear_camera_module and self.lidar_module:
                     print("Keyboard Interrupt occur")
                     self.front_camera_module.close_cam()
                     self.rear_camera_module.close_cam()
