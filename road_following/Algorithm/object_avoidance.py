@@ -3,30 +3,48 @@ import os
 from pathlib import Path
 PATH = str(Path(os.path.dirname(os.path.abspath(__file__))).parent)
 sys.path.append(PATH)
-from utility import is_outside
-from Algorithm.Control import moving_log
+from utility import object_detection, box_area
+from yolov5.models.common import DetectMultiBackend
+from yolov5.utils.general import non_max_suppression
 
 class avoidance():
-    def __init__(self, serial, left_log, right_log):
+    def __init__(self, serial, camera_module, detect_weight_file, speed):
         self.serial = serial
-        self.left_log = left_log
-        self.right_log = right_log
+        self.front_camera_module = camera_module
+        self.detect_weight_file = detect_weight_file
+        self.detect_network = DetectMultiBackend(weights = self.detect_weight_file)
+        self.speed = speed
         pass
-    def action(self, img):
+    def action(self, outside_flag):
         try:
-            if is_outside(img) == True:
-                messages = moving_log(self.left_log)
+            box_threshold = 0
+            while True:
+                cam_img = self.front_camera_module.read()
+                pred = self.detect_network(cam_img)
+                pred = non_max_suppression(pred)[0]
                 
-            else:
-                messages = moving_log(self.right_log)
-                
-            for message in messages:
+                detect, _ = object_detection(pred)
+                car_bbox = detect[3]
+                if outside_flag == True:
+                    if box_area(car_bbox) > box_threshold:
+                        direction = -7
+                    else:
+                        break
+                else:
+                    if box_area(car_bbox) > box_threshold:
+                        direction = 7
+                    else:
+                        break
+                        
+                message = "a" + str(direction) + "s" + str(self.speed) + "o0"
                 self.serial.write(message.encode())
-                print(message)
+                
+
+            
             return True
             pass
         except Exception as e:
             _, _, tb = sys.exc_info()
-            print("Trying avoidance error = {}, error line = {}".format(e, tb.tb_lineno))
+            print("avoidance error = {}, error line = {}".format(e, tb.tb_lineno))
             return False
             pass

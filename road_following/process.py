@@ -40,10 +40,11 @@ class DoWork:
         self.labels_to_names = {0 : "Crosswalk", 1 : "Green", 2 : "Red", 3 : "Car"}
         
         self.lidar_port = '/dev/ttyUSB1'
+        self.lidar_module = None
 
-        self.avoidance_processor = avoidance(self.serial, left_log='left_move.txt',right_log='right_move.txt')
-        self.parking_log = parking_log
-        self.parking_processor = idealparking(self.serial, self.parking_log)
+        
+        # self.parking_log = parking_log
+        # self.parking_processor = idealparking(self.serial, self.parking_log)
         self.parking_stage = 1
     def serial_start(self):
         try:
@@ -90,7 +91,9 @@ class DoWork:
             self.lidar_health = self.lidar_module.get_health()
             print(self.lidar_health)
             return True
-        except:
+        except Exception as e:
+            _, _, tb = sys.exc_info()
+            print("lidar start error = {}, error line = {}".format(e, tb.tb_lineno))
             return False
     
     def lidar_finish(self):
@@ -102,7 +105,6 @@ class DoWork:
 
     def Driving(self):
         bef_1d, bef_2d, bef_3d = 0,0,0
-        
         while True:
             try:
                 if self.front_camera_module == None:
@@ -132,6 +134,8 @@ class DoWork:
                         draw_img = show_bounding_box(draw_img, pred)
 
                         detect, order_flag = object_detection(pred)
+                        
+                        
                     
                     # do not cut roi when turn right case
                     
@@ -156,7 +160,6 @@ class DoWork:
                     road_direction = return_road_direction(road_gradient)
                     model_direction = torch.argmax(self.rf_network.run(preprocess(roi_img, mode = "test"))).item() - 7
                     final_direction = total_control(road_direction, model_direction, bottom_value)
-                   
 
                     if order_flag == 0: # stop
                         self.direction = 0
@@ -169,14 +172,9 @@ class DoWork:
                     
                     elif order_flag == 2: # road change
                         print("road change!")
-                        if is_outside(preprocess_img) == True:
-                            self.direction = -7
-                        else:
-                            self.direction = 7
-
-                        # self.avoidance_processor.action(preprocess_img)
-                        
-                        pass
+                        avoidance_processor = avoidance(self.serial, self.front_camera_module, 
+                                                        self.detect_weight_file, self.speed)
+                        avoidance_processor(is_outside(preprocess_img))
 
                     message = 'a' + str(self.direction) +  's' + str(self.speed) + 'o' + str(outside)
                     self.serial.write(message.encode())
@@ -209,7 +207,7 @@ class DoWork:
                 break
                 pass
             
-            if cv2.waitKey(25) == ord('f') :
+            if cv2.waitKey(25) == ord('f'):
                 end_message = "a0s0o0"
                 self.serial.write(end_message.encode())
                 self.serial.close()
@@ -230,33 +228,7 @@ class DoWork:
         2. Ideal Parking Position
         3. Action
         """
-        detect_queue = 0
-        self.lidar_start()
-        for i, scan in enumerate(self.lidar_module.iter_scans()):
-            #print('%d: Got %d measurments' % (i, len(scan)))
-
-            scan = np.array(scan, dtype=np.int16)
-            #scan_right = scan[np.where(s)]
-            # print(scan)
-            lidar_detect_condition = (scan[:,1]<305) & (scan[:,1]>275)
-            #print(scan[np.where(lidar_detect_condition)])
-            if len(np.where(lidar_detect_condition)[0]) > 0:
-                detect_queue *= 2
-                detect_queue += 1
-                detect_queue %= 32
-            else:
-                detect_queue *= 2
-                detect_queue %= 32
-            #print("detect queue: ", detect_queue)
-            if detect_queue == 0:
-                print("object not detected")
-            else:
-                print("object detected")
-
-            if i > 500:
-                break
-
-        self.lidar_finish()
+        
 
 
         while True:
@@ -265,27 +237,64 @@ class DoWork:
                     print("Please Check Camera module")
                     break
                     pass
+                if self.lidar_module == None:
+                    print("Please Check Lidar module")
+                    break
+                    pass
                 else:
-                    
+                    self.lidar_start()
+                    car_location = 'left'
                     if  self.parking_stage == 1:
                         """
                         직진하며 주차 공간 탐색
                         라이다로 어느 위치에 주차할지 탐색
                         """
+                        detect_queue = 0
+                        for i, scan in enumerate(self.lidar_module.iter_scans()):
+                            scan = np.array(scan, dtype=np.int16)
+                            lidar_detect_condition = (scan[:,1]<305) & (scan[:,1]>275)
+                            if len(np.where(lidar_detect_condition)[0]) > 0:
+                                detect_queue *= 2
+                                detect_queue += 1
+                                detect_queue %= 32
+                            else:
+                                detect_queue *= 2
+                                detect_queue %= 32
+                            #print("detect queue: ", detect_queue)
+                            if detect_queue == 0:
+                                print("object not detected")
+                            else:
+                                print("object detected")
+
+                            if i > 500:
+                                break
+                        self.direction = 0
+                        message = 'a' + str(self.direction) +  's' + str(self.speed)
+                        self.serial.write(message.encode())
+                        
                         if True:
                             self.parking_stage = 2
                             pass
                         pass
-                    elif    self.parking_stage == 2:
+                    elif self.parking_stage == 2:
                         """
-                        Ideal Parking Location으로 이동
+                        Parking start
                         """
+                        if car_location == 'left':
+                            self.direction = -7
+                            self.speed = -30
+                        else:
+                            self.direction = 7
+                            self.speed = 30
+                        message = 'a' + str(self.direction) +  's' + str(self.speed)
+                        self.serial.write(message.encode())
+                            
                         if True:
                             """"Ideal Location 이동 성공"""
                             self.parking_stage = 3
                             pass
                         pass
-                    elif    self.parking_stage == 3:
+                    elif self.parking_stage == 3:
                         """
                         parking action
                         """
@@ -299,6 +308,7 @@ class DoWork:
                                 end_message = "a0s0o0"
                                 self.serial.write(end_message.encode())
                                 self.serial.close()
+                                self.lidar_finish()
                                 print("Parking Finish")
                     
                                 break
@@ -312,6 +322,7 @@ class DoWork:
                     end_message = "a0s0o0"
                     self.serial.write(end_message.encode())
                     self.serial.close()
+                    self.lidar_finish()
                 break
                 pass
             except KeyboardInterrupt:
@@ -322,6 +333,7 @@ class DoWork:
                     end_message = "a0s0o0"
                     self.serial.write(end_message.encode())
                     self.serial.close()
+                    self.lidar_finish()
                 break
                 pass
             
@@ -333,6 +345,7 @@ class DoWork:
                 end_message = "a0s0o0"
                 self.serial.write(end_message.encode())
                 self.serial.close()
+                self.lidar_finish()
                 print("Program Finish")
                 
                 break
