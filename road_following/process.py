@@ -32,7 +32,7 @@ class DoWork:
         self.serial = serial.Serial()
         self.serial.port = '/dev/ttyUSB0'       ### 아두이노 메가
         self.serial.baudrate = 9600
-        self.speed = 200
+        self.speed = 0
         self.direction = 0
         if play_name == "Driving":
             self.rf_network = model.ResNet18(weight_file = self.rf_weight_file)
@@ -72,7 +72,7 @@ class DoWork:
         
     def rear_camera_start(self):
         try:
-            self.rear_camera_module = Devices.Camera.CameraModule(width=640, height=480)
+            self.rear_camera_module = Devices.Camera.CameraModule(width=640, height=360)
             self.rear_camera_module.open_cam(self.cam_num[self.rear_cam_name])
             print("REAR Camera open")
             return True
@@ -114,7 +114,7 @@ class DoWork:
                 else:
                     cam_img = self.front_camera_module.read()
                     bird_img = bird_convert(cam_img, self.front_cam_name)
-                    cv2.imshow("bird_raw",bird_img)
+                    
                     preprocess_img = total_function(bird_img)
                     binary_img = cvt_binary(bird_img)
                     roi_img = roi_cutting(binary_img)
@@ -184,6 +184,7 @@ class DoWork:
                     cv2.imshow('VideoCombined_rf', roi_img)
                     cv2.imshow('VideoCombined_rf2', preprocess_img)
                     
+                    
                     bef_1d, bef_2d, bef_3d = self.direction, bef_1d, bef_2d
                     pass
                 
@@ -219,7 +220,7 @@ class DoWork:
                 
                 break
             
-            time.sleep((0.0003))
+            time.sleep((0.0001))
     
     def Parking(self):
         """
@@ -253,30 +254,28 @@ class DoWork:
                         """
                         detect_queue = 0
 
-                        cam_img = self.front_camera_module.read()
-                        cv2.imshow("video", cam_img)
-                        scan = self.lidar_module.iter_scans()
-                        # for i, scan in enumerate(self.lidar_module.iter_scans()):
-                        scan = np.array(scan, dtype=np.int16)
-                        print(scan)
-                        lidar_detect_condition = (scan[:,1]<305) & (scan[:,1]>275)
-                        if len(np.where(lidar_detect_condition)[0]) > 0:
-                            detect_queue *= 2
-                            detect_queue += 1
-                            detect_queue %= 32
-                        else:
-                            detect_queue *= 2
-                            detect_queue %= 32
-                        cv2.imshow()
-                            #print("detect queue: ", detect_queue)
-                            # if detect_queue == 0:
-                            #     print("object not detected")
-                            # else:
-                            #     print("object detected")
-                        i+=1
-                        if i > 500:
-                            i = 1
-                            break
+                        # cam_img = self.front_camera_module.read()
+                        # cv2.imshow("video", cam_img)
+                        for i, scan in enumerate(self.lidar_module.iter_scans()):
+                            scan = np.array(scan, dtype=np.int16)
+                            lidar_detect_condition = ((scan[:,1]<40) | (scan[:,1]>210)) & (scan[:,2] < 1000)
+                                                        
+                            print(scan[np.where(lidar_detect_condition)])
+                            if len(np.where(lidar_detect_condition)[0]) > 0:
+                                detect_queue *= 2
+                                detect_queue += 1
+                                detect_queue %= 32
+                            else:
+                                detect_queue *= 2
+                                detect_queue %= 32
+                        
+                            print("detect queue: ", detect_queue)
+                            if detect_queue == 0:
+                                print("object not detected")
+                            else:
+                                print("object detected")
+                            if i > 500:
+                                break
                         self.direction = 0
                         message = 'a' + str(self.direction) +  's' + str(self.speed)
                         self.serial.write(message.encode())
