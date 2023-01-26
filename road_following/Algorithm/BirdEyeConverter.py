@@ -7,17 +7,19 @@ import matplotlib.pyplot as plt
 import pickle
 import os
 
-
-image_width = 640
-image_height = 480
 direction_div = 12
+'''
+### roi
 _shape = np.array([
     [(int(0.05 * image_width), int(0.20 * image_height)), (int(0.495 * image_width), int(0.20 * image_height)), 
     (int(0.495 * image_width), int(0.95 * image_height)), (int(0.05 * image_width), int(0.95 * image_height))], 
     [(int(0.505 * image_width), int(0.20 * image_height)), (int(0.95 * image_width), int(0.20 * image_height)), 
     (int(0.95 * image_width), int(0.95 * image_height)), (int(0.505 * image_width), int(0.95 * image_height))]
     ])
+    
+## srcmat 예시
 mat_pts_src = np.float32([[263, 31], [582, 47], [557, 349], [8, 250]])  ###
+'''
 
 # Source Points of Front / Back Camera
 def which_srcmat(FB):
@@ -27,7 +29,7 @@ def which_srcmat(FB):
         with open(path_perspect + '/front_perspect_param.pkl', 'rb') as f:
             # print('perspect.pkl opened!')   
             dic_param = pickle.load(f)
-    elif FB == 'back':
+    elif FB == 'REAR':
         path_perspect = os.path.dirname(os.path.abspath(__file__))
         with open(path_perspect + '/back_perspect_param.pkl', 'rb') as f:   
             # print('perspect.pkl opened!')   
@@ -54,21 +56,19 @@ def warpping(image, pts_src):
     return _image, minv
 
 
-
-
 def bird_convert(img, FB):
-    #img_undist = calibrate(img)
+    image_width = 640
+    if FB == "FRONT":
+        image_height = 480
+    elif FB == "REAR":
+        image_height = 360
+        
     srcmat = which_srcmat(FB)
-    #img_warpped, minverse = warpping(img_undist, srcmat)
-    # warpped_roi = cv2.polylines(img_warpped, _shape, True, (0, 0, 255))    
     img_warpped, minverse = warpping(img, srcmat)
-    # img_w_f = color_filter(img_warpped)
-    # img_gray = cv2.cvtColor(img_w_f, cv2.COLOR_BGR2GRAY)
-    # ret, img_thresh = cv2.threshold(img_gray, 100, 255, cv2.THRESH_BINARY)
 
     # cv2.imshow('warp', img_warpped)    ###
-    # cv2.imshow('filter', img_w_f)    ###
-    # cv2.imshow('gray', img_gray)
+    
     return img_warpped
+
 
 
