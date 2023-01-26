@@ -10,11 +10,13 @@ while True:
     cam_name = input("Enter Camera Name (f:Front, r:Rear) : ")
     if cam_name == 'f':
         cam_idx = 2
-        image_height = 480 
+        image_height = 480
+        cam_name = "FRONT"
         break
     elif cam_name == 'r':
         cam_idx = 4
         image_height = 360 
+        cam_name = "REAR"
         break
     else:
         print("Wrong Camera")
@@ -39,9 +41,8 @@ while True:
         print(frame.shape)
         img_idx = 1
     if (ret is True):
-        print(frame.shape)
         cv2.imshow('frame', frame)
-        frame_p = total_function(frame, 'back')
+        frame_p = bird_convert(frame, cam_name)
         cv2.imshow('processed', frame_p)
 
         if cv2.waitKey(25) == ord('f') :

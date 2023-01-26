@@ -1,4 +1,3 @@
-
 ### custom_code.py 수정
 
 import cv2
@@ -42,33 +41,29 @@ def which_srcmat(FB):
     
     
 # Warpping (Bird Eye View)
-def warpping(image, pts_src):
+def warpping(image, pts_src, FB):
     (h, w) = (image.shape[0], image.shape[1])
     ###source = np.float32([[223, 349], [461, 336], [622, 426], [102, 445]])
-    destination = np.float32(
-        [[round(w * 0.3), round(h * 0.0)], [round(w * 0.7), round(h * 0.0)], 
-        [round(w * 0.7), h], [round(w * 0.3), h]])
-    
+    if FB == "FRONT":
+        destination = np.float32(
+            [[round(w * 0.3), round(h * 0.0)], [round(w * 0.7), round(h * 0.0)], 
+            [round(w * 0.7), h], [round(w * 0.3), h]])
+    elif FB == "REAR":
+        destination = np.float32(
+            [[round(w * 0.2), round(h * 0.15)], [round(w * 0.8), round(h * 0.15)], 
+            [round(w * 0.8), round(h * 1.0)], [round(w * 0.2), round(h * 1.0)]])
     transform_matrix = cv2.getPerspectiveTransform(pts_src, destination)
     minv = cv2.getPerspectiveTransform(destination, pts_src)
-    _image = cv2.warpPerspective(image, transform_matrix, (640,480))
+    _image = cv2.warpPerspective(image, transform_matrix, (w,h))
 
     return _image, minv
 
 
 def bird_convert(img, FB):
-    image_width = 640
-    if FB == "FRONT":
-        image_height = 480
-    elif FB == "REAR":
-        image_height = 360
-        
     srcmat = which_srcmat(FB)
-    img_warpped, minverse = warpping(img, srcmat)
+    img_warpped, minverse = warpping(img, srcmat, FB)
 
     # cv2.imshow('warp', img_warpped)    ###
     
     return img_warpped
-
-
 

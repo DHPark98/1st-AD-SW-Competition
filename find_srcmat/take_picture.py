@@ -43,11 +43,12 @@ if num_pic == 0:
             if cv2.waitKey(25) == ord('p') :
                 print(frame.shape)
                 path_cur = os.path.dirname(os.path.abspath(__file__))
-                path = path_cur + '/data_img_srcmat/'
                 img_title = which_camera + 'img_for_srcmat'
-                img_idx += 1
-                cv2.imwrite(path+img_title+".png", frame)
+                path_store = path_cur + "/data_img_srcmat/" + img_title + ".png"
+                print(path_store)
+                cv2.imwrite(path_store, frame)
                 print('saved!')
+                img_idx += 1
         
 else:
     while img_idx < num_pic:
@@ -59,10 +60,9 @@ else:
 
             if cv2.waitKey(25) == ord('p') :
                 path_cur = os.path.dirname(os.path.abspath(__file__))
-                path = path_cur + '/data_img_calib/'
                 img_title = 'calib_before_' + str(uuid.uuid1())
                 img_idx += 1
-                cv2.imwrite(path+img_title+".png", frame)
+                cv2.imwrite(path_cur + img_title+".png", frame)
                 print('saved {}!'.format(img_idx))
             
             # if cv2.waitKey(25) == ord('f') :
