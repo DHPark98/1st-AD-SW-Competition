@@ -242,6 +242,7 @@ class DoWork:
                     break
                     pass
                 else:
+                    self.parking_stage = 1
                     self.lidar_start()
                     car_location = 'left'
                     if  self.parking_stage == 1:
