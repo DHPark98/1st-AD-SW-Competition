@@ -2,7 +2,7 @@ import serial
 import logging
 import time
 import sys
-from Lidar_utility import _b2i, _showhex, _process_scan
+from Lidar_utility import _b2i, _showhex, _process_scan, lidar_initialize
 import struct
 
 SYNC_BYTE = b'\xA5'
@@ -192,18 +192,14 @@ class LidarModule():
         for new_scan, quality, angle, distance in iterator:
             if new_scan:
                 if len(scan_list) > min_len:
-                    yield scan_list
+                    return scan_list
                 scan_list = []
             if distance > 0:
-                scan_list.append((quality, angle, distance))
+                scan_list.append((lidar_initialize(int(angle)), int(distance)))
+    
     
     def disconnect(self):
         '''Disconnects from the serial port'''
         if self._serial is None:
             return
         self._serial.close()
-            
-    def lidar_finish(self):
-        self.scanning_stop()
-        self.stop_motor()
-        self.disconnect()   

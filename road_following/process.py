@@ -20,32 +20,37 @@ from Algorithm.object_avoidance import avoidance
 from Algorithm.ideal_parking import idealparking
 class DoWork:
     def __init__(self, play_name, front_cam_name, rear_cam_name, rf_weight_file = None, detect_weight_file = None, parking_log = None):
-        self.front_camera_module = None
         self.play_type = play_name
+        
+        # Camera
+        self.front_camera_module = None
+        self.rear_camera_module = None
         self.cam_num = {"FRONT" : 2, "REAR" : 4}
         self.front_cam_name = front_cam_name
         self.rear_cam_name = rear_cam_name
         
+        # Model
         self.rf_weight_file = rf_weight_file
         self.detect_weight_file = detect_weight_file
-        
-        self.serial = serial.Serial()
-        self.serial.port = '/dev/ttyUSB0'       ### 아두이노 메가
-        self.serial.baudrate = 9600
-        self.speed = 0
-        self.direction = 0
-        if play_name == "Driving":
-            self.rf_network = model.ResNet18(weight_file = self.rf_weight_file)
+    
+        self.rf_network = model.ResNet18(weight_file = self.rf_weight_file) if play_name == "Driving" else None
         self.detect_network = DetectMultiBackend(weights = detect_weight_file)
         self.labels_to_names = {0 : "Crosswalk", 1 : "Green", 2 : "Red", 3 : "Car"}
         
+        # Arduino Serial
+        self.serial = serial.Serial()
+        self.serial.port = '/dev/ttyUSB0'       ### 아두이노 메가
+        self.serial.baudrate = 9600
+        
+        # Control
+        self.speed = 0
+        self.parking_speed = 0
+        self.direction = 0
+        
+        # Lidar
         self.lidar_port = '/dev/ttyUSB1'
         self.lidar_module = None
 
-        
-        # self.parking_log = parking_log
-        # self.parking_processor = idealparking(self.serial, self.parking_log)
-        self.parking_stage = 1
     def serial_start(self):
         try:
             self.serial.open()
@@ -85,11 +90,7 @@ class DoWork:
     def lidar_start(self):
         try:
             self.lidar_module = Devices.rplidar.RPLidar(self.lidar_port)
-            self.lidar_info = self.lidar_module.get_info()
-            print(self.lidar_info)
-
-            self.lidar_health = self.lidar_module.get_health()
-            print(self.lidar_health)
+            print("Lidar open")
             return True
         except Exception as e:
             _, _, tb = sys.exc_info()
@@ -100,8 +101,6 @@ class DoWork:
         self.lidar_module.stop()
         self.lidar_module.stop_motor()
         self.lidar_module.disconnect()
- 
-
 
     def Driving(self):
         bef_1d, bef_2d, bef_3d = 0,0,0
@@ -133,23 +132,14 @@ class DoWork:
                         
                         draw_img = show_bounding_box(draw_img, pred)
 
-                        detect, order_flag = object_detection(pred)
-                        
-                        
-                    
-                    # do not cut roi when turn right case
-                    
-                    # if(0):
-                    #     road_gradient, bottom_value = dominant_gradient(preprocess_img, preprocess_img)
-                    #     if road_gradient < 0:
-                    #         road_gradient, bottom_value = dominant_gradient(roi_img, preprocess_img)
+                        _, order_flag = object_detection(pred)
 
                     road_gradient, bottom_value = dominant_gradient(roi_img, preprocess_img)
                         
 
                     if (road_gradient == None and bottom_value == None): # Gradient가 없을 경우 예외처리(Exception Image)
                         self.direction = 0
-                        message = 'a' + str(self.direction) +  's' + str(self.speed) +'o' + str(outside)
+                        message = 'a' + str(bef_1d) +  's' + str(self.speed) +'o' + str(outside)
                         self.serial.write(message.encode())
                         print(message)
                         continue    
@@ -231,9 +221,17 @@ class DoWork:
         """
         
 
-
+        near_detect_condition = ((-90 < scan[:,0]) & (scan[:,0] < 90)) & (scan[:,1] < 500)
+        car_search_condition = (((-90 < scan[:,0]) & (scan[:,0] < -80)) | ((80 < scan[:,0]) & (scan[:,0] < 90))) & (scan[:,1] < 2000)
+        car_left_condition = ((80 < scan[:,0]) & (scan[:,0] < 90)) & (scan[:,1] < 2000)
+        car_right_condition = ((-90 < scan[:,0]) & (scan[:,0] < -80)) & (scan[:,1] < 2000)
+        car_detect_queue = 0
+        near_detect_queue = 0
+        parking_stage = -1
+        new_car_cnt = 0
+        obj = False
+        parking_direction = 0
         while True:
-            i = 1
             try:
                 if self.front_camera_module == None or self.rear_camera_module == None:
                     print("Please Check Camera module")
@@ -243,91 +241,95 @@ class DoWork:
                     print("Please Check Lidar module")
                     break
                     pass
-                else:
-                    self.parking_stage = 1
-                    self.lidar_start()
-                    car_location = 'left'
+                front_cam_img, rear_cam_img = self.front_camera_module.read(), self.rear_camera_module.read()
+                
+                front_bev, rear_bev = bird_convert(front_cam_img, self.front_cam_name), bird_convert(rear_cam_img, self.rear_cam_name)
+                
+                front_prep_img, rear_prep_img = total_function(front_bev), total_function(rear_bev)
+                
+                front_binary_img, rear_binary_img = cvt_binary(front_prep_img), cvt_binary(rear_prep_img)
+                
+                scan = np.array(self.lidar_module.iter_scans())
+                car_scan = scan[np.where(car_search_condition)]
+                near_scan = scan[np.where(near_detect_condition)]
+                
+                if parking_stage == -1:
+                    print(near_scan)
+                    pass
+                
+                
+                if parking_stage == 0:
+                    if len(np.where(car_search_condition)[0]):
+                        car_detect_queue = (car_detect_queue * 2 + 1) % 64
+                    else:
+                        car_detect_queue = (car_detect_queue * 2) % 64
                     
-                    if  self.parking_stage == 1:
-                        """
-                        직진하며 주차 공간 탐색
-                        라이다로 어느 위치에 주차할지 탐색
-                        """
-                        detect_queue = 0
-
-                        # cam_img = self.front_camera_module.read()
-                        # cv2.imshow("video", cam_img)
-                        for i, scan in enumerate(self.lidar_module.iter_scans()):
-                            scan = np.array(scan, dtype=np.int16)
-                            lidar_detect_condition = ((scan[:,1]<40) | (scan[:,1]>210)) & (scan[:,2] < 1000)
-                                                        
-                            print(scan[np.where(lidar_detect_condition)])
-                            if len(np.where(lidar_detect_condition)[0]) > 0:
-                                detect_queue *= 2
-                                detect_queue += 1
-                                detect_queue %= 32
-                            else:
-                                detect_queue *= 2
-                                detect_queue %= 32
-                        
-                            print("detect queue: ", detect_queue)
-                            if detect_queue == 0:
-                                print("object not detected")
-                            else:
-                                print("object detected")
-                            if i > 500:
-                                break
-                        self.direction = 0
-                        message = 'a' + str(self.direction) +  's' + str(self.speed)
-                        self.serial.write(message.encode())
-                        
-                        if True:
-                            self.parking_stage = 2
-                            pass
+                    print(scan)
+                    if car_detect_queue == 0:
+                        print('car not detected')
+                        obj = False
+                    else:
+                        print('car detected')
+                        if obj == False:
+                            new_car_cnt +=1
+                        obj = True
+                    
+                    if new_car_cnt == 2:
+                        parking_stage = 1
+                        obj = False
+                        if len(np.where(car_left_condition)[0]):
+                            parking_direction = -1
+                        elif len(np.where(car_right_condition)[0]):
+                            parking_direction = 1
+                        else:
+                            parking_direction = 0
                         pass
-                    # elif self.parking_stage == 2:
-                    #     """
-                    #     Parking start
-                    #     """
-                    #     if car_location == 'left':
-                    #         self.direction = -7
-                    #         self.speed = -30
-                    #     else:
-                    #         self.direction = 7
-                    #         self.speed = 30
-                    #     message = 'a' + str(self.direction) +  's' + str(self.speed)
-                    #     self.serial.write(message.encode())
-                            
-                    #     if True:
-                    #         """"Ideal Location 이동 성공"""
-                    #         self.parking_stage = 3
-                    #         pass
-                    #     pass
-                    # elif self.parking_stage == 3:
-                    #     """
-                    #     parking action
-                    #     """
-                    #     self.parking_processor.action(parking_location = 3)
-                    #     if True:
-                    #         """paking finish"""
-                    #         if self.front_camera_module and self.rear_camera_module:
-                    #             self.rear_camera_module.close_cam()
-                    #             self.front_camera_module.close_cam()
-                    #             cv2.destroyAllWindows()
-                    #             end_message = "a0s0o0"
-                    #             self.serial.write(end_message.encode())
-                    #             self.serial.close()
-                    #             self.lidar_finish()
-                    #             print("Parking Finish")
+
+                    self.direction = 0
                     
-                    #             break
-                    #     pass
-                    # pass
+                    
+                elif parking_stage == 1:
+                    self.parking_speed *= -1
+                    self.direction = parking_direction * 7
+                    
+                    if len(np.where(near_detect_condition)[0]):
+                        self.parking_speed = 0
+                        parking_stage = 2
+                    pass
+                
+                elif parking_stage == 2:
+                    self.direction = 0
+                    """
+                    직진하며 앞라인 검출 시작
+                    """
+                
+                
+                    
+                
+                
+                
+                message = 'a' + str(self.direction) +  's' + str(self.parking_speed) +'o0'
+                self.serial.write(message.encode())
+                
+                
+                    
+                
+                cv2.imshow("video_original_f", front_cam_img)
+                cv2.imshow("video_original_r", rear_cam_img)
+                cv2.imshow("video_binary_f", front_prep_img)
+                cv2.imshow("video_binary_r", rear_prep_img)
+                
+                
+                
+                
             except Exception as e:
-                if self.front_camera_module and self.rear_camera_module and self.lidar_module:
+                if self.front_camera_module and self.rear_camera_module:
                     print("Exception occur")
                     self.front_camera_module.close_cam()
                     self.rear_camera_module.close_cam()
+                    cv2.destroyAllWindows()
+                if self.lidar_module:
+                    self.lidar_finish()
                     end_message = "a0s0o0"
                     self.serial.write(end_message.encode())
                     self.serial.close()
@@ -335,14 +337,17 @@ class DoWork:
                 break
                 pass
             except KeyboardInterrupt:
-                if self.front_camera_module and self.rear_camera_module and self.lidar_module:
+                if self.front_camera_module and self.rear_camera_module:
                     print("Keyboard Interrupt occur")
                     self.front_camera_module.close_cam()
                     self.rear_camera_module.close_cam()
-                    end_message = "a0s0o0"
-                    self.serial.write(end_message.encode())
-                    self.serial.close()
+                    cv2.destroyAllWindows()
+                if self.lidar_module:
                     self.lidar_finish()
+                end_message = "a0s0o0"
+                self.serial.write(end_message.encode())
+                self.serial.close()
+                
                 break
                 pass
             
@@ -351,6 +356,8 @@ class DoWork:
                     self.rear_camera_module.close_cam()
                     self.front_camera_module.close_cam()
                     cv2.destroyAllWindows()
+                if self.lidar_module:
+                    self.lidar_finish()
                 end_message = "a0s0o0"
                 self.serial.write(end_message.encode())
                 self.serial.close()

@@ -354,3 +354,6 @@ def front_line_detect(image):
         _, _, tb = sys.exc_info()
         print("front line detection error = {}, error line = {}".format(e, tb.tb_lineno))
         return None
+    
+    
+    
