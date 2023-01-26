@@ -18,6 +18,7 @@ from Algorithm.Control import total_control, smooth_direction
 from Algorithm.img_preprocess import total_function
 from Algorithm.object_avoidance import avoidance
 from Algorithm.ideal_parking import idealparking
+from Devices.Lidar import LidarModule
 class DoWork:
     def __init__(self, play_name, front_cam_name, rear_cam_name, rf_weight_file = None, detect_weight_file = None, parking_log = None):
         self.play_type = play_name
@@ -89,7 +90,7 @@ class DoWork:
         
     def lidar_start(self):
         try:
-            self.lidar_module = Devices.rplidar.RPLidar(self.lidar_port)
+            self.lidar_module = LidarModule()
             print("Lidar open")
             return True
         except Exception as e:
@@ -98,7 +99,7 @@ class DoWork:
             return False
     
     def lidar_finish(self):
-        self.lidar_module.stop()
+        self.lidar_module.scanning_stop()
         self.lidar_module.stop_motor()
         self.lidar_module.disconnect()
 
@@ -221,13 +222,10 @@ class DoWork:
         """
         
 
-        near_detect_condition = ((-90 < scan[:,0]) & (scan[:,0] < 90)) & (scan[:,1] < 500)
-        car_search_condition = (((-90 < scan[:,0]) & (scan[:,0] < -80)) | ((80 < scan[:,0]) & (scan[:,0] < 90))) & (scan[:,1] < 2000)
-        car_left_condition = ((80 < scan[:,0]) & (scan[:,0] < 90)) & (scan[:,1] < 2000)
-        car_right_condition = ((-90 < scan[:,0]) & (scan[:,0] < -80)) & (scan[:,1] < 2000)
+        
         car_detect_queue = 0
         near_detect_queue = 0
-        parking_stage = -1
+        parking_stage = 0
         new_car_cnt = 0
         obj = False
         parking_direction = 0
@@ -243,13 +241,18 @@ class DoWork:
                     pass
                 front_cam_img, rear_cam_img = self.front_camera_module.read(), self.rear_camera_module.read()
                 
-                front_bev, rear_bev = bird_convert(front_cam_img, self.front_cam_name), bird_convert(rear_cam_img, self.rear_cam_name)
+                # front_bev, rear_bev = bird_convert(front_cam_img, self.front_cam_name), bird_convert(rear_cam_img, self.rear_cam_name)
                 
-                front_prep_img, rear_prep_img = total_function(front_bev), total_function(rear_bev)
+                # front_prep_img, rear_prep_img = total_function(front_bev), total_function(rear_bev)
                 
-                front_binary_img, rear_binary_img = cvt_binary(front_prep_img), cvt_binary(rear_prep_img)
+                # front_binary_img, rear_binary_img = cvt_binary(front_prep_img), cvt_binary(rear_prep_img)
                 
                 scan = np.array(self.lidar_module.iter_scans())
+                near_detect_condition = ((-90 < scan[:,0]) & (scan[:,0] < 90)) & (scan[:,1] < 1000)
+                car_search_condition = (((-90 < scan[:,0]) & (scan[:,0] < -80)) | ((80 < scan[:,0]) & (scan[:,0] < 90))) & (scan[:,1] < 2000)
+                car_left_condition = ((80 < scan[:,0]) & (scan[:,0] < 90)) & (scan[:,1] < 2000)
+                car_right_condition = ((-90 < scan[:,0]) & (scan[:,0] < -80)) & (scan[:,1] < 2000)
+
                 car_scan = scan[np.where(car_search_condition)]
                 near_scan = scan[np.where(near_detect_condition)]
                 
@@ -316,8 +319,8 @@ class DoWork:
                 
                 cv2.imshow("video_original_f", front_cam_img)
                 cv2.imshow("video_original_r", rear_cam_img)
-                cv2.imshow("video_binary_f", front_prep_img)
-                cv2.imshow("video_binary_r", rear_prep_img)
+                # cv2.imshow("video_binary_f", front_prep_img)
+                # cv2.imshow("video_binary_r", rear_prep_img)
                 
                 
                 
@@ -330,10 +333,10 @@ class DoWork:
                     cv2.destroyAllWindows()
                 if self.lidar_module:
                     self.lidar_finish()
-                    end_message = "a0s0o0"
-                    self.serial.write(end_message.encode())
-                    self.serial.close()
-                    self.lidar_finish()
+                print("Exception error : ", e)
+                end_message = "a0s0o0"
+                self.serial.write(end_message.encode())
+                self.serial.close()
                 break
                 pass
             except KeyboardInterrupt:

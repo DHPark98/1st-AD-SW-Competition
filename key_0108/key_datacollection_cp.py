@@ -176,7 +176,7 @@ if __name__ == '__main__':
             #img_b_bird = total_function(img_b, 'back')     # image processed back
             
             cv2.imshow('Video_f', img_f)
-            cv2.imshow('Video_b', img_b)            
+            # cv2.imshow('Video_b', img_b)            
             # cv2.imshow('Video_f_bird', img_f)
             # print(img_p_f.shape)
 
@@ -195,7 +195,7 @@ if __name__ == '__main__':
             
             detection_obj = "car"
             img_f_bird_title = "{0}f_bird--{1}--{2}--{3}".format(path, str(message), time_stamp, uuid_cur)
-            yolo_title = "{}{}--{}--{}".format(path, detection_obj, time_stamp, uuid_cur)
+            yolo_title = "{}{}--{}".format(path, detection_obj, time_stamp)
             cv2.imwrite(yolo_title + ".png", img_f)
             
             time_prev_write = time.time()

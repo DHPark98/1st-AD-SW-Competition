@@ -2,6 +2,11 @@ import serial
 import logging
 import time
 import sys
+from pathlib import Path
+import os
+sys.path.append(os.path.dirname(__file__))
+# sys.path.append("")
+
 from Lidar_utility import _b2i, _showhex, _process_scan, lidar_initialize
 import struct
 
