@@ -6,50 +6,77 @@ import numpy as np
 from Camera import CameraModule
 import cv2
 import time
-lidar_module = LidarModule()
+lidar_module = LidarModule(lidar_port='/dev/tty.usbserial-110')
 camera_module = CameraModule(width=640, height=480)
 camera_module.open_cam(0)
 
-# for i, scan in enumerate(lidar_module.iter_scans()):
-#     print(type(scan))
-#     scan = np.array(scan, dtype = np.int16)
-#     print(scan.shape)
-    
-    
-#     if i>50:
-#         break
+car_detect_queue = 0
+new_car_cnt = 0
+obj = False
+i = 0
 
-i = 1
+detect_cnt = 0
 while True:
     try:
         cam_img = camera_module.read()
-        scan = lidar_module.iter_scans()
-        scan = np.array(scan)
-        lidar_detect_condition = ((-90 < scan[:,0]) & (scan[:,0] < 90)) & (scan[:,1] < 1000)
-        # print(scan[np.where(lidar_detect_condition)])
-        print(scan[np.where(lidar_detect_condition)])
-        cv2.imshow("video", cam_img)
-        i+=1
-        if i == 1000:
+        scan = np.array(lidar_module.iter_scans())
+        car_search_condition = (((50 < scan[:,0]) & (scan[:,0] < 60)) & (scan[:,1] < 300))
+        if len(np.where(car_search_condition)[0]):
+            car_detect_queue = (car_detect_queue * 2 + 1) % 32
+
+        else:
+            car_detect_queue = (car_detect_queue * 2) % 32
+
+        if car_detect_queue == 0:
+            
+            if detect_cnt == 0:
+                obj = False
+                print('car not detected')
+                pass
+            else:
+                detect_cnt -= 1
+        else:
+            if detect_cnt == 10:
+                print('car detected')
+                if obj == False:
+                    new_car_cnt += 1
+                obj = True
+            else:
+                detect_cnt += 1
+        
+        if new_car_cnt == 2:
+            print("Detect two car!")
             break
         
+        
+        cv2.imshow("video", cam_img)
+        print(i)
+        i+=1
         if cv2.waitKey(25) == ord('f'):
             camera_module.close_cam()
             cv2.destroyAllWindows()
             
-            lidar_module.scanning_stop()
-            lidar_module.stop_motor()
-            lidar_module.disconnect()
+            lidar_module.lidar_finish()
             print("Program Finish")
             break
     except Exception as e:
         print("Error : {}".format(e))
+        camera_module.close_cam()
+        cv2.destroyAllWindows()
+            
+        lidar_module.lidar_finish()
+        break
+    
+    except KeyboardInterrupt:
+        print("Keyboard interrupt occur")
+        camera_module.close_cam()
+        cv2.destroyAllWindows()
+            
+        lidar_module.lidar_finish()
         break
     
     time.sleep(0.0001)
     
-lidar_module.scanning_stop()
-lidar_module.stop_motor()
-lidar_module.disconnect()
+lidar_module.lidar_finish()
     
     

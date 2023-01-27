@@ -48,12 +48,12 @@ class RPLidarException(Exception):
     '''Basic exception class for RPLidar'''
 
 class LidarModule():
-    def __init__(self, baudrate=115200, timeout=1, logger=None):
-        self.lidar_port = '/dev/ttyUSB1'
+    def __init__(self, lidar_port = '/dev/ttyUSB1', baudrate=115200, timeout=1, logger=None):
+        self.lidar_port = lidar_port
         self._serial = None
         self.baudrate = baudrate
         self.timeout = timeout
-        self._motor_speed = 900
+        self._motor_speed = DEFAULT_MOTOR_PWM
         self.scanning = [False, 0, 'normal']
         self.express_trame = 32
         self.express_data = False
@@ -170,7 +170,7 @@ class LidarModule():
         self._serial.flushInput()
     
     
-    def iter_measures(self, max_buf_meas= 1000):
+    def iter_measures(self, max_buf_meas= 3000):
         self.start_motor()
         if not self.scanning[0]:
             self.scanning_start()
@@ -191,7 +191,7 @@ class LidarModule():
             yield _process_scan(raw)
             
     
-    def iter_scans(self, max_buf_meas=1000, min_len=5):
+    def iter_scans(self, max_buf_meas=3000, min_len=5):
         scan_list = []
         iterator = self.iter_measures(max_buf_meas)
         for new_scan, quality, angle, distance in iterator:
@@ -208,3 +208,9 @@ class LidarModule():
         if self._serial is None:
             return
         self._serial.close()
+        
+    def lidar_finish(self):
+        self.scanning_stop()
+        self.stop_motor()
+        self.disconnect()
+        pass
