@@ -338,7 +338,20 @@ def total_process(image, mode = "FRONT"):
     binary_img = cvt_binary(prep_img)
     
     return binary_img
-    
+
+def parking_steering_angle(theta):
+    theta_1 = np.zeros(theta.shape)
+    theta_1[:len(theta)-1] = theta[1:]
+    theta_1[len(theta)-1] = theta[0]
+    delta_theta = np.abs((theta - theta_1)[1:len(theta)-1]) # delta theta가 너무 작은 경우 threshold로 걸러내는 작업 필요
+
+    ret_idx = np.argmax(delta_theta)
+    if len(delta_theta) < 10:
+        return 0
+    # return
+    return (theta[ret_idx+1] + theta[ret_idx+2])/2
+
+
     
     
     

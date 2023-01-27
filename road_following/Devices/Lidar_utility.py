@@ -28,7 +28,7 @@ def _process_scan(raw):
     distance = (_b2i(raw[3]) + (_b2i(raw[4]) << 8)) / 4.
     return new_scan, quality, angle, distance
 
-def lidar_initialize(value, mid = 305):
+def lidar_initialize(value, mid = 312):
         if abs(value - mid) >= 180:
             return 360 - (mid - value)
         else:

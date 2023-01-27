@@ -13,7 +13,7 @@ from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import non_max_suppression
 from utility import (roi_cutting, preprocess, show_bounding_box, 
                     object_detection, dominant_gradient, cvt_binary, 
-                    return_road_direction, is_outside, box_area, total_process)
+                    return_road_direction, is_outside, box_area, total_process, parking_steering_angle)
 from Algorithm.Control import total_control, smooth_direction
 from Algorithm.img_preprocess import total_function
 from Algorithm.object_avoidance import avoidance
@@ -45,7 +45,7 @@ class DoWork:
         
         # Control
         self.speed = 0
-        self.parking_speed = 50
+        self.parking_speed = 0
         self.direction = 0
         
         # Lidar
@@ -220,12 +220,15 @@ class DoWork:
         
         car_detect_queue = 0
         near_detect_queue = 0
-        parking_stage = 0
+        parking_stage = -1
         new_car_cnt = 0
         obj = False
         parking_direction = 0
         detect_cnt = 0
+        queue_key = 0
+        total_array = np.array([[-1, -1, -1]])
         while True:
+
             try:
                 if self.front_camera_module == None or self.rear_camera_module == None:
                     print("Please Check Camera module")
@@ -237,19 +240,43 @@ class DoWork:
                     pass
                 front_cam_img, rear_cam_img = self.front_camera_module.read(), self.rear_camera_module.read() 
                 
-                
+                scan = np.array(self.lidar_module.iter_scans())
+                    
+                car_search_condition = (((-100 < scan[:,0]) & (scan[:,0] < -90)) | ((90 < scan[:,0]) & (scan[:,0] < 100)))  & (scan[:,1] < 2000)
+                near_detect_condition = ((-100 < scan[:,0]) & (scan[:,0] < 100)) & (scan[:,1] < 500)
+                car_left_condition = ((90 < scan[:,0]) & (scan[:,0] < 100)) & (scan[:,1] < 2000)
+                car_right_condition = ((-100 < scan[:,0]) & (scan[:,0] < -90)) & (scan[:,1] < 2000)
+                detect_condition = ((-100 < scan[:,0]) & (scan[:,0] < 100)) & (scan[:,1] < 1000)
                 
                 if parking_stage == -1: # Lidar Test
+                    # 
+
+                    scan = scan[np.where(detect_condition)]
+                    queue_key_arr = (np.ones(len(scan))*queue_key).reshape(-1, 1)
+                    concat_scan = np.concatenate((queue_key_arr, scan), axis=1)
+
+                    total_array = total_array[np.where(total_array[:,0] != queue_key)]
+                    total_array = np.concatenate((total_array, concat_scan), axis = 0)
+                    total_array = total_array[np.where(total_array[:,0] != -1)]
+
+                    theta_vector = total_array[:,1]
+                    theta_vector = np.sort(theta_vector)
+
+                    
+                    print(parking_steering_angle(theta_vector))
+                    # print(theta_vector)
+
+
+                    
+                    
+                    # print(local_minima(scan))
+
+                    queue_key = (queue_key + 1) % 10
+
                     pass
                 
                 
                 if parking_stage == 0: # Search parking start position
-                    scan = np.array(self.lidar_module.iter_scans())
-                    
-                    car_search_condition = (((-90 < scan[:,0]) & (scan[:,0] < -80)) | ((80 < scan[:,0]) & (scan[:,0] < 90)))  & (scan[:,1] < 2000)
-                    near_detect_condition = ((-90 < scan[:,0]) & (scan[:,0] < 90)) & (scan[:,1] < 1000)
-                    car_left_condition = ((80 < scan[:,0]) & (scan[:,0] < 90)) & (scan[:,1] < 2000)
-                    car_right_condition = ((-90 < scan[:,0]) & (scan[:,0] < -80)) & (scan[:,1] < 2000)
                     
                     if len(np.where(car_search_condition)[0]):
                         car_detect_queue = (car_detect_queue * 2 + 1) % 32
@@ -290,19 +317,18 @@ class DoWork:
                     
                     
                 elif parking_stage == 1:
-                    self.parking_speed = 0
-                    # self.parking_speed = -50
-                    # self.direction = parking_direction * 7
+                    self.parking_speed = -30
+                    self.direction = parking_direction * 7
                     
-                    # if len(np.where(near_detect_condition)[0]):
-                    #     self.parking_speed = 0
-                    #     parking_stage = 2
-                    # pass
+                    if len(np.where(near_detect_condition)[0]):
+                        self.parking_speed = 0
+                        parking_stage = 2
+                    pass
                 
                 elif parking_stage == 2:
                     self.direction = 0
-                    self.parking_speed = 50
-                    binary_front_image = total_process(front_cam_img)
+                    self.parking_speed = 0
+                    # binary_front_image = total_process(front_cam_img)
                     
                     """
                     직진하며 앞라인 검출 시작
