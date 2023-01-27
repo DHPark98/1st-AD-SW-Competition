@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 PATH = str(Path(os.path.dirname(os.path.abspath(__file__))).parent)
 sys.path.append(PATH)
-from utility import object_detection, box_area
+from utility import object_detection, box_area, box_center, center_inside
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import non_max_suppression
 
@@ -17,7 +17,7 @@ class avoidance():
         pass
     def action(self, outside_flag):
         try:
-            box_threshold = 0
+            box_threshold = 21000
             while True:
                 cam_img = self.front_camera_module.read()
                 pred = self.detect_network(cam_img)
@@ -25,13 +25,17 @@ class avoidance():
                 
                 detect, _ = object_detection(pred)
                 car_bbox = detect[3]
+                
+                bbox_center = box_center(car_bbox)
+                bbox_area = box_area(car_bbox)
                 if outside_flag == True:
-                    if box_area(car_bbox) > box_threshold:
+                    
+                    if center_inside(bbox_center) == True and bbox_area > box_threshold:
                         direction = -7
                     else:
                         break
                 else:
-                    if box_area(car_bbox) > box_threshold:
+                    if center_inside(bbox_center) == True and bbox_area > box_threshold:
                         direction = 7
                     else:
                         break

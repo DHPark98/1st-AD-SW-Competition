@@ -53,7 +53,7 @@ class LidarModule():
         self._serial = None
         self.baudrate = baudrate
         self.timeout = timeout
-        self._motor_speed = DEFAULT_MOTOR_PWM
+        self._motor_speed = 900
         self.scanning = [False, 0, 'normal']
         self.express_trame = 32
         self.express_data = False

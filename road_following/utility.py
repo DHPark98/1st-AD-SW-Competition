@@ -98,12 +98,13 @@ def preprocess(image, mode, device = "cuda"):
         image = image[None, ...]
         return image
 
+
 def box_center(box):
     if box == None:
         return None
-    else:
-        p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
-        return ((p1[0] + p2[0])/2, (p1[1] + p2[1])/2)
+    
+    p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
+    return (int((p1[0] + p2[0])/2), int((p1[1] + p2[1])/2))
 
 def box_area(box):
     if box == None:
@@ -111,6 +112,15 @@ def box_area(box):
     p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
     box_area = (p2[0] - p1[0]) * (p2[1] - p1[1])
     return box_area
+
+def center_inside(center):
+    x = center[0]
+    y = center[1]
+    
+    if x > 550 or x < 90 or y < 270:
+        return False
+    else:
+        return True
 
 def show_bounding_box(image, pred):
     labels_to_names = {0 : "Crosswalk", 1 : "Green", 2 : "Red", 3 : "Car"}

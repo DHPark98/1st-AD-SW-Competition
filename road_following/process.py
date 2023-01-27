@@ -134,9 +134,9 @@ class DoWork:
                         draw_img = show_bounding_box(draw_img, pred)
 
                         _, order_flag = object_detection(pred)
-
-                    road_gradient, bottom_value = dominant_gradient(roi_img, preprocess_img)
                         
+                    road_gradient, bottom_value = dominant_gradient(roi_img, preprocess_img)
+                    
 
                     if (road_gradient == None and bottom_value == None): # Gradient가 없을 경우 예외처리(Exception Image)
                         self.direction = 0
@@ -146,8 +146,8 @@ class DoWork:
                         continue    
 
 
-                    print('grad: ',road_gradient)
-                    print('bottom: ', bottom_value)
+                    # print('grad: ',road_gradient)
+                    # print('bottom: ', bottom_value)
                     road_direction = return_road_direction(road_gradient)
                     model_direction = torch.argmax(self.rf_network.run(preprocess(roi_img, mode = "test"))).item() - 7
                     final_direction = total_control(road_direction, model_direction, bottom_value)
