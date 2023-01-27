@@ -237,9 +237,7 @@ class DoWork:
                     pass
                 front_cam_img, rear_cam_img = self.front_camera_module.read(), self.rear_camera_module.read() 
                 
-                near_detect_condition = ((-90 < scan[:,0]) & (scan[:,0] < 90)) & (scan[:,1] < 1000)
-                car_left_condition = ((80 < scan[:,0]) & (scan[:,0] < 90)) & (scan[:,1] < 2000)
-                car_right_condition = ((-90 < scan[:,0]) & (scan[:,0] < -80)) & (scan[:,1] < 2000)
+                
                 
                 if parking_stage == -1: # Lidar Test
                     pass
@@ -247,7 +245,12 @@ class DoWork:
                 
                 if parking_stage == 0: # Search parking start position
                     scan = np.array(self.lidar_module.iter_scans())
-                    car_search_condition = (((50 < scan[:,0]) & (scan[:,0] < 60)) & (scan[:,1] < 300))
+                    
+                    car_search_condition = (((-90 < scan[:,0]) & (scan[:,0] < -80)) | ((80 < scan[:,0]) & (scan[:,0] < 90)))  & (scan[:,1] < 2000)
+                    near_detect_condition = ((-90 < scan[:,0]) & (scan[:,0] < 90)) & (scan[:,1] < 1000)
+                    car_left_condition = ((80 < scan[:,0]) & (scan[:,0] < 90)) & (scan[:,1] < 2000)
+                    car_right_condition = ((-90 < scan[:,0]) & (scan[:,0] < -80)) & (scan[:,1] < 2000)
+                    
                     if len(np.where(car_search_condition)[0]):
                         car_detect_queue = (car_detect_queue * 2 + 1) % 32
 
