@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import uuid
 import sys
 from datetime import datetime
+from Algorithm.BirdEyeConverter import bird_convert
 
 def get_resistance_value(file):
     dir, filename = os.path.split(file)
@@ -98,12 +99,13 @@ def preprocess(image, mode, device = "cuda"):
         image = image[None, ...]
         return image
 
+
 def box_center(box):
     if box == None:
         return None
-    else:
-        p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
-        return ((p1[0] + p2[0])/2, (p1[1] + p2[1])/2)
+    
+    p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
+    return (int((p1[0] + p2[0])/2), int((p1[1] + p2[1])/2))
 
 def box_area(box):
     if box == None:
@@ -111,6 +113,15 @@ def box_area(box):
     p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
     box_area = (p2[0] - p1[0]) * (p2[1] - p1[1])
     return box_area
+
+def center_inside(center):
+    x = center[0]
+    y = center[1]
+    
+    if x > 550 or x < 90 or y < 270:
+        return False
+    else:
+        return True
 
 def show_bounding_box(image, pred):
     labels_to_names = {0 : "Crosswalk", 1 : "Green", 2 : "Red", 3 : "Car"}
@@ -129,8 +140,7 @@ def show_bounding_box(image, pred):
 
 def object_detection(pred): # pred 중 class별로 가장 큰 bbox return
     pred_array = [None, None, None, None] # 0:Crosswalk, 1:Green, 2:Red, 3:Car
-    bbox_threshold = [0, 0, 0, 0] # bbox area
-    car_bottom_threshold = 0 # car bbox 밑부분이 어디까지 내려와야 검출하는지
+    bbox_threshold = [30000, 10000, 10000, 20000] # bbox area
     
     for *box, cf, cls in pred:
         bbox_area = box_area(box)
@@ -141,7 +151,7 @@ def object_detection(pred): # pred 중 class별로 가장 큰 bbox return
             else:
                 pred_array[cls] = box
                 
-        elif (cls == 3 and box[1][1] > car_bottom_threshold and
+        elif (cls == 3 and center_inside(box_center(box)) and
                 box_area(box) > bbox_threshold[cls]): # find object(car)
             pred_array[cls] = box
                 
@@ -169,7 +179,7 @@ def dominant_gradient(image, pre_image): # 흑백 이미지에서 gradient 값, 
         img_edge = cv2.Canny(img_blur, 110,180)
     except Exception as e:
         _, _, tb = sys.exc_info()
-        print("image preprocess error = {}, error line = {}".format(e, tb.tb_lineno))
+        print("image preprocess(gradient) error = {}, error line = {}".format(e, tb.tb_lineno))
         
         exception_image_path = "./exception_image/"
         
@@ -219,42 +229,6 @@ def dominant_gradient(image, pre_image): # 흑백 이미지에서 gradient 값, 
                         else:
                             angle = np.arctan((x2-x1)/(y1-y2))*180/np.pi
                         angles.append(angle)
-                        
-        
-    except Exception as e:
-        _, _, tb = sys.exc_info()
-        print("gradient detection error = {}, error line = {}".format(e, tb.tb_lineno))
-        exception_image_path = "./exception_image/"
-        try:
-            if not os.path.exists(exception_image_path):
-                os.mkdir(exception_image_path)    
-        except OSError:
-            print('Error: Creating dirctory. ' + exception_image_path)
-        cv2.imwrite(os.path.join(exception_image_path, "exception_image--{}.png".format(str(uuid.uuid1()))), pre_image)
-        return None, None
-
-        
-                
-                # cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
-        # print(angles)
-        # res = image
-    # if(ppp):
-    #     minLineLength = 100
-    #     maxLineGap = 0
-    #     lines = cv2.HoughLinesP(img_edge,1,np.pi/360,100,minLineLength,maxLineGap)
-    #     if((lines) == None):
-    #             res = image.copy()
-    #             return res
-    #     for i in range(len(lines)):
-    #         for x1,y1,x2,y2 in lines[i]:
-    #             cv2.line(image,(x1,y1),(x2,y2),(0,0,255),3)
-    #             print((x2-x1)/(y2-y1))
-    #             res = image.copy()
-    #lines = cv2.HoughLinesP(img_edge, 2, np.pi/180., 50, minLineLength = 40, maxLineGap = 5)
-    
-    #lane = lane_detect(image)
-    try:
-    
         result_idx = np.where(bottom_flag == 1)[0]
         if len(angles) == 0:
             result = 0
@@ -262,7 +236,8 @@ def dominant_gradient(image, pre_image): # 흑백 이미지에서 gradient 값, 
             result = np.median(angles)
 
         #print(angles)
-        return result, result_idx
+        return result, result_idx               
+        
     except Exception as e:
         _, _, tb = sys.exc_info()
         print("gradient detection error = {}, error line = {}".format(e, tb.tb_lineno))
@@ -274,7 +249,6 @@ def dominant_gradient(image, pre_image): # 흑백 이미지에서 gradient 값, 
             print('Error: Creating dirctory. ' + exception_image_path)
         cv2.imwrite(os.path.join(exception_image_path, "exception_image--{}.png".format(str(uuid.uuid1()))), pre_image)
         return None, None
-    # result = np.average(angles)
     
 
 
@@ -354,6 +328,17 @@ def front_line_detect(image):
         _, _, tb = sys.exc_info()
         print("front line detection error = {}, error line = {}".format(e, tb.tb_lineno))
         return None
+
+
+def total_process(image, mode = "FRONT"):
+    # original image => binary bev image
+    
+    bev = bird_convert(image, mode)
+    prep_img = total_function(bev)
+    binary_img = cvt_binary(prep_img)
+    
+    return binary_img
+    
     
     
     

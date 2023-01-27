@@ -48,8 +48,8 @@ class RPLidarException(Exception):
     '''Basic exception class for RPLidar'''
 
 class LidarModule():
-    def __init__(self, baudrate=115200, timeout=1, logger=None):
-        self.lidar_port = '/dev/ttyUSB1'
+    def __init__(self, lidar_port = '/dev/ttyUSB1', baudrate=115200, timeout=1, logger=None):
+        self.lidar_port = lidar_port
         self._serial = None
         self.baudrate = baudrate
         self.timeout = timeout
@@ -208,3 +208,9 @@ class LidarModule():
         if self._serial is None:
             return
         self._serial.close()
+        
+    def lidar_finish(self):
+        self.scanning_stop()
+        self.stop_motor()
+        self.disconnect()
+        pass
