@@ -170,7 +170,7 @@ class LidarModule():
         self._serial.flushInput()
     
     
-    def iter_measures(self, max_buf_meas= 3000):
+    def iter_measures(self, max_buf_meas= 1000):
         self.start_motor()
         if not self.scanning[0]:
             self.scanning_start()
@@ -191,7 +191,7 @@ class LidarModule():
             yield _process_scan(raw)
             
     
-    def iter_scans(self, max_buf_meas=3000, min_len=5):
+    def iter_scans(self, max_buf_meas=1000, min_len=5):
         scan_list = []
         iterator = self.iter_measures(max_buf_meas)
         for new_scan, quality, angle, distance in iterator:
