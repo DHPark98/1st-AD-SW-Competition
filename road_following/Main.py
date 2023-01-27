@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
     elif play_name == "Parking":
         processor = process.DoWork(play_name = "Parking", front_cam_name = "FRONT", rear_cam_name = "REAR",
-                                   detect_weight_file="./model_weight_file/yolo_weight.pt", parking_log = None)
+                                   detect_weight_file="./model_weight_file/yolo_weight.pt")
         serial_result = processor.serial_start()
         if serial_result == True:
             front_camera_opened = processor.front_camera_start()

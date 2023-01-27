@@ -20,7 +20,7 @@ from Algorithm.object_avoidance import avoidance
 from Algorithm.ideal_parking import idealparking
 from Devices.Lidar import LidarModule
 class DoWork:
-    def __init__(self, play_name, front_cam_name, rear_cam_name, rf_weight_file = None, detect_weight_file = None, parking_log = None):
+    def __init__(self, play_name, front_cam_name, rear_cam_name, rf_weight_file = None, detect_weight_file = None):
         self.play_type = play_name
         
         # Camera
