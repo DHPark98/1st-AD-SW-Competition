@@ -1,0 +1,13 @@
+train: ./yolo_detection_dataset/train.txt
+val: ./yolo_detection_dataset/val.txt
+test: ./yolo_detection_dataset/test.txt
+
+nc: 4
+names: ['crosswalk', 'traffic light-green-', 'traffic light-red-', 'car']
+
+roboflow:
+  workspace: project
+  project: autonomous_project
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/project/autonomous_project/dataset/1
