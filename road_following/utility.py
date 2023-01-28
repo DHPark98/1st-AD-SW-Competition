@@ -339,13 +339,35 @@ def total_process(image, mode = "FRONT"):
     
     return binary_img
 
-def parking_steering_angle(theta):
+def parking_steering_angle(scan, queue_key):
+    delta_threshold = 10
+    
+    queue_key_arr = (np.ones(len(scan))*queue_key).reshape(-1, 1)
+    concat_scan = np.concatenate((queue_key_arr, scan), axis=1)
+
+    if total_array == None:
+        total_array = np.array([[-1, -1, -1]])
+    
+    total_array = total_array[np.where(total_array[:,0] != queue_key)]
+    total_array = np.concatenate((total_array, concat_scan), axis = 0)
+    total_array = total_array[np.where(total_array[:,0] != -1)]
+
+    theta = total_array[:,1]
+    theta = np.sort(theta)
+    
     theta_1 = np.zeros(theta.shape)
     theta_1[:len(theta)-1] = theta[1:]
     theta_1[len(theta)-1] = theta[0]
     delta_theta = np.abs((theta - theta_1)[1:len(theta)-1]) # delta theta가 너무 작은 경우 threshold로 걸러내는 작업 필요
-
+    
+    
+    
+    
     ret_idx = np.argmax(delta_theta)
+    
+    if delta_theta[ret_idx] < delta_threshold:
+        pass
+    
     if len(delta_theta) < 10:
         return 0
     # return

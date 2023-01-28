@@ -45,7 +45,7 @@ class DoWork:
         
         # Control
         self.speed = 0
-        self.parking_speed = 0
+        self.parking_speed = 30
         self.direction = 0
         
         # Lidar
@@ -224,9 +224,11 @@ class DoWork:
         new_car_cnt = 0
         obj = False
         parking_direction = 0
+        parking_speed = 30
+        self.parking_speed = parking_speed
         detect_cnt = 0
         queue_key = 0
-        total_array = np.array([[-1, -1, -1]])
+        parking_steering_weight = 2
         while True:
 
             try:
@@ -246,30 +248,14 @@ class DoWork:
                 near_detect_condition = ((-100 < scan[:,0]) & (scan[:,0] < 100)) & (scan[:,1] < 500)
                 car_left_condition = ((90 < scan[:,0]) & (scan[:,0] < 100)) & (scan[:,1] < 2000)
                 car_right_condition = ((-100 < scan[:,0]) & (scan[:,0] < -90)) & (scan[:,1] < 2000)
-                detect_condition = ((-100 < scan[:,0]) & (scan[:,0] < 100)) & (scan[:,1] < 1000)
-                
+                detect_condition = ((-100 < scan[:,0]) & (scan[:,0] < 100)) & (scan[:,1] < 2000)
+                straight_condition = ((-100 < scan[:,0]) & (scan[:,0] < 100)) & (scan[:,1] < 1500)
                 if parking_stage == -1: # Lidar Test
                     # 
+                    self.parking_speed = 0
 
                     scan = scan[np.where(detect_condition)]
-                    queue_key_arr = (np.ones(len(scan))*queue_key).reshape(-1, 1)
-                    concat_scan = np.concatenate((queue_key_arr, scan), axis=1)
-
-                    total_array = total_array[np.where(total_array[:,0] != queue_key)]
-                    total_array = np.concatenate((total_array, concat_scan), axis = 0)
-                    total_array = total_array[np.where(total_array[:,0] != -1)]
-
-                    theta_vector = total_array[:,1]
-                    theta_vector = np.sort(theta_vector)
-
-                    
-                    print(parking_steering_angle(theta_vector))
-                    # print(theta_vector)
-
-
-                    
-                    
-                    # print(local_minima(scan))
+                    print(parking_steering_angle(scan, queue_key))
 
                     queue_key = (queue_key + 1) % 10
 
@@ -313,22 +299,51 @@ class DoWork:
                             parking_direction = 0
                         pass
 
-                    self.direction = 0
+                    self.direction = 0 # 선 따라가도록 바꿀 예정
                     
                     
                 elif parking_stage == 1:
-                    self.parking_speed = -30
+                    self.parking_speed = -1 * parking_speed
                     self.direction = parking_direction * 7
                     
                     if len(np.where(near_detect_condition)[0]):
+                        
+                        # rest
                         self.parking_speed = 0
+                        self.direction = 0
+                        message = 'a' + str(self.direction) +  's' + str(self.parking_speed) +'o0'
+                        self.serial.write(message.encode())
+                        time.sleep(0.3)
+                        
                         parking_stage = 2
                     pass
                 
                 elif parking_stage == 2:
                     self.direction = 0
+                    self.parking_speed = parking_speed
+                    
+                    if len(np.where(straight_condition)[0]) == 0:
+                        self.parking_speed = 0
+                        self.direction = 0
+                        message = 'a' + str(self.direction) +  's' + str(self.parking_speed) +'o0'
+                        self.serial.write(message.encode())
+                        time.sleep(0.3)
+                        parking_stage = 3
+                
+                elif parking_stage == 3:
+                    scan = scan[np.where(detect_condition)]
+                    steering_angle = parking_steering_angle(scan, queue_key)
+                    self.direction = return_road_direction(-1 * steering_angle * parking_steering_weight)
+                    self.parking_speed = parking_speed * -1
+                    queue_key = (queue_key + 1) % 10
+                    
+                    if len(np.where(near_detect_condition)[0]):
+                        parking_stage = 10
+                
+                elif parking_stage == 10: # finish
+                    self.direction = 0
                     self.parking_speed = 0
-                    # binary_front_image = total_process(front_cam_img)
+                    
                     
                     """
                     직진하며 앞라인 검출 시작

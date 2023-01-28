@@ -6,8 +6,9 @@ import numpy as np
 from glob import glob
 import matplotlib.pyplot as plt
 from pathlib import Path
-PATH = str(Path(os.path.dirname(__file__)).parent)
-sys.path.append(os.path.join(PATH, 'yolov5'))
+PATH = os.pardir
+sys.path.append(PATH)
+print(sys.path)
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import non_max_suppression
 from utility import preprocess, show_bounding_box
