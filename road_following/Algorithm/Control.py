@@ -70,7 +70,7 @@ def total_control(road_direction, model_direction, bottom_value):
     final_direction = control_correction(road_direction, model_direction)
     print("model_direction : ",model_direction)
     print("final_direction:", final_direction)
-    return final_direction
+    return road_direction
 
 def smooth_direction(bef1, bef2, bef3, cur):
     average = bef3 * 0.1 + bef2 * 0.2 + bef1 * 0.3 + cur * 0.4

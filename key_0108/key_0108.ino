@@ -123,7 +123,7 @@ void loop() {
       angle = angle_temp;
     }
     }
-    if(1){
+    if(0){
     Serial.print("straight: "); 
     Serial.print(sss);
     Serial.println(straight);
@@ -137,7 +137,7 @@ void loop() {
     resistance = analogRead(POT);
     mapped_resistance = map(resistance, 872, 757, -7, 7);
     
-    if(1){
+    if(0){
     Serial.print(" Read/Map [A1]/[b]: ");  
     Serial.print(resistance);
     Serial.print(" / ");

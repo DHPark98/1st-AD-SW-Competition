@@ -6,7 +6,7 @@ import numpy as np
 import cv2
 import random
 import numpy as np
-from Algorithm.outdoor_lane_detection import *
+# from Algorithm.outdoor_lane_detection import *
 import time
 from Algorithm.img_preprocess import cvt_binary, total_function
 import matplotlib.pyplot as plt
@@ -118,10 +118,10 @@ def center_inside(center):
     x = center[0]
     y = center[1]
     
-    if x > 550 or x < 90 or y < 270:
-        return False
-    else:
+    if 70 < x and x < 570 and y > 160:
         return True
+    else:
+        return False
 
 def show_bounding_box(image, pred):
     labels_to_names = {0 : "Crosswalk", 1 : "Green", 2 : "Red", 3 : "Car"}
@@ -140,7 +140,7 @@ def show_bounding_box(image, pred):
 
 def object_detection(pred): # pred 중 class별로 가장 큰 bbox return
     pred_array = [None, None, None, None] # 0:Crosswalk, 1:Green, 2:Red, 3:Car
-    bbox_threshold = [30000, 10000, 10000, 20000] # bbox area
+    bbox_threshold = [30000, 15000, 15000, 15000] # bbox area
     
     for *box, cf, cls in pred:
         bbox_area = box_area(box)
@@ -154,7 +154,7 @@ def object_detection(pred): # pred 중 class별로 가장 큰 bbox return
         elif (cls == 3 and center_inside(box_center(box)) and
                 box_area(box) > bbox_threshold[cls]): # find object(car)
             pred_array[cls] = box
-                
+    # print(pred_array)
     if pred_array[0] != None and pred_array[2] != None:
         order_flag = 0
     elif pred_array[3] != None:
@@ -260,7 +260,14 @@ def return_road_direction(road_gradient):
     ret_direction = -7 if ret_direction <= -7 else ret_direction
     
     return ret_direction
-        
+
+def return_parking_direction(parking_gradient):
+    f = lambda x :  7/20 * x
+    ret_direction = int(f(parking_gradient))
+    
+    ret_direction = 7 if ret_direction >= 7 else ret_direction
+    ret_direction = -7 if ret_direction <= -7 else ret_direction
+    return ret_direction
 
 def find_nearest(array, value=315):
     array = np.asarray(array)
@@ -339,39 +346,71 @@ def total_process(image, mode = "FRONT"):
     
     return binary_img
 
-def parking_steering_angle(scan, queue_key):
+def parking_steering_angle(scan, queue_key, total_array):
     delta_threshold = 10
     
     queue_key_arr = (np.ones(len(scan))*queue_key).reshape(-1, 1)
     concat_scan = np.concatenate((queue_key_arr, scan), axis=1)
 
-    if total_array == None:
-        total_array = np.array([[-1, -1, -1]])
-    
-    total_array = total_array[np.where(total_array[:,0] != queue_key)]
-    total_array = np.concatenate((total_array, concat_scan), axis = 0)
-    total_array = total_array[np.where(total_array[:,0] != -1)]
 
-    theta = total_array[:,1]
-    theta = np.sort(theta)
-    
-    theta_1 = np.zeros(theta.shape)
-    theta_1[:len(theta)-1] = theta[1:]
-    theta_1[len(theta)-1] = theta[0]
-    delta_theta = np.abs((theta - theta_1)[1:len(theta)-1]) # delta theta가 너무 작은 경우 threshold로 걸러내는 작업 필요
-    
-    
-    
-    
-    ret_idx = np.argmax(delta_theta)
-    
-    if delta_theta[ret_idx] < delta_threshold:
-        pass
-    
-    if len(delta_theta) < 10:
+    try:
+        total_array = total_array[np.where(total_array[:,0] != queue_key)]
+        total_array = np.concatenate((total_array, concat_scan), axis = 0)
+        total_array = total_array[np.where(total_array[:,0] != -1)]
+
+        theta = total_array[:,1]
+        theta = np.sort(theta)
+        
+        theta_1 = np.zeros(theta.shape)
+        theta_1[:len(theta)-1] = theta[1:]
+        theta_1[len(theta)-1] = theta[0]
+        delta_theta = np.abs((theta - theta_1)[1:len(theta)-1]) # delta theta가 너무 작은 경우 threshold로 걸러내는 작업 필요
+        
+        
+        
+        
+        ret_idx = np.argmax(delta_theta)
+        
+        if delta_theta[ret_idx] < delta_threshold:
+            pass
+        
+        if len(delta_theta) < 5:
+            print("Delta error")
+            return 0
+        # return
+        return (theta[ret_idx+1] + theta[ret_idx+2])/2
+    except Exception as e:
+        print("steering angle error")
+        
         return 0
-    # return
-    return (theta[ret_idx+1] + theta[ret_idx+2])/2
+
+def good_parking(scan, queue_key, total_array):
+    
+    queue_key_arr = (np.ones(len(scan))*queue_key).reshape(-1, 1)
+    concat_scan = np.concatenate((queue_key_arr, scan), axis=1)
+    print("Fuction scan : ", scan)
+
+    try:
+        total_array = total_array[np.where(total_array[:,0] != queue_key)]
+        print(total_array)
+        total_array = np.concatenate((total_array, concat_scan), axis = 0)
+        print(total_array)
+        total_array = total_array[np.where(total_array[:,0] != -1)]
+        print(total_array)
+        ret_idx = np.argmin(total_array[:,2])
+
+        if len(total_array) < 5:
+            print("Too short array error")
+            return 0
+        # return
+        return total_array[ret_idx][1]
+    except Exception as e:
+        print("good parking error")
+        
+        return 0
+
+    
+    
 
 
     

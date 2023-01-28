@@ -13,8 +13,9 @@ from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import non_max_suppression
 from utility import (roi_cutting, preprocess, show_bounding_box, 
                     object_detection, dominant_gradient, cvt_binary, 
-                    return_road_direction, is_outside, box_area, total_process, parking_steering_angle)
-from Algorithm.Control import total_control, smooth_direction
+                    return_road_direction, is_outside, box_area, total_process, parking_steering_angle,
+                    return_parking_direction, good_parking)
+from Algorithm.Control import total_control, smooth_direction, strengthen_control
 from Algorithm.img_preprocess import total_function
 from Algorithm.object_avoidance import avoidance
 from Algorithm.ideal_parking import idealparking
@@ -33,7 +34,7 @@ class DoWork:
         # Model
         self.rf_weight_file = rf_weight_file
         self.detect_weight_file = detect_weight_file
-    
+
         self.rf_network = model.ResNet18(weight_file = self.rf_weight_file) if play_name == "Driving" else None
         self.detect_network = DetectMultiBackend(weights = detect_weight_file)
         self.labels_to_names = {0 : "Crosswalk", 1 : "Green", 2 : "Red", 3 : "Car"}
@@ -44,8 +45,10 @@ class DoWork:
         self.serial.baudrate = 9600
         
         # Control
-        self.speed = 0
-        self.parking_speed = 30
+        self.speed = 80
+        self.speed_value = self.speed
+
+        self.parking_speed = 40
         self.direction = 0
         
         # Lidar
@@ -140,27 +143,28 @@ class DoWork:
                         print(message)
                         continue    
 
-
+                    
                     # print('grad: ',road_gradient)
                     # print('bottom: ', bottom_value)
                     road_direction = return_road_direction(road_gradient)
-                    model_direction = torch.argmax(self.rf_network.run(preprocess(roi_img, mode = "test"))).item() - 7
-                    final_direction = total_control(road_direction, model_direction, bottom_value)
-
+                    # model_direction = torch.argmax(self.rf_network.run(preprocess(roi_img, mode = "test"))).item() - 7
+                    # final_direction = total_control(road_direction, model_direction, bottom_value)
+                    final_direction = strengthen_control(road_direction, bottom_value)
                     if order_flag == 0: # stop
                         self.direction = 0
                         self.speed = 0
                         pass
                     elif order_flag == 1: # go
                         # self.direction = final_direction
+                        self.speed = self.speed_value
                         self.direction = smooth_direction(bef_1d, bef_2d, bef_3d, final_direction)
                         pass
                     
                     elif order_flag == 2: # road change
                         print("road change!")
                         avoidance_processor = avoidance(self.serial, self.front_camera_module, 
-                                                        self.detect_weight_file, self.speed)
-                        avoidance_processor(is_outside(preprocess_img))
+                                                        self.detect_weight_file, 50)
+                        avoidance_processor.action(is_outside(preprocess_img))
 
                     message = 'a' + str(self.direction) +  's' + str(self.speed) + 'o' + str(outside)
                     self.serial.write(message.encode())
@@ -198,6 +202,7 @@ class DoWork:
                 end_message = "a0s0o0"
                 self.serial.write(end_message.encode())
                 self.serial.close()
+                print(end_message)
                 if self.front_camera_module:
                     self.front_camera_module.close_cam()
                     cv2.destroyAllWindows()
@@ -220,15 +225,19 @@ class DoWork:
         
         car_detect_queue = 0
         near_detect_queue = 0
-        parking_stage = -1
+        parking_stage = 3
         new_car_cnt = 0
         obj = False
         parking_direction = 0
-        parking_speed = 30
+        parking_speed = 40
         self.parking_speed = parking_speed
         detect_cnt = 0
         queue_key = 0
-        parking_steering_weight = 2
+        parking_steering_weight = 5
+        left_cnt = 0
+        right_cnt = 0
+        total_array = np.array([[-1, -1, -1]])
+        distance_threshold = 250
         while True:
 
             try:
@@ -241,15 +250,22 @@ class DoWork:
                     break
                     pass
                 front_cam_img, rear_cam_img = self.front_camera_module.read(), self.rear_camera_module.read() 
-                
+                print("Parking stage : {}".format(parking_stage))
                 scan = np.array(self.lidar_module.iter_scans())
                     
                 car_search_condition = (((-100 < scan[:,0]) & (scan[:,0] < -90)) | ((90 < scan[:,0]) & (scan[:,0] < 100)))  & (scan[:,1] < 2000)
-                near_detect_condition = ((-100 < scan[:,0]) & (scan[:,0] < 100)) & (scan[:,1] < 500)
+                near_detect_condition = ((-100 < scan[:,0]) & (scan[:,0] < 100)) & (scan[:,1] < 400)
                 car_left_condition = ((90 < scan[:,0]) & (scan[:,0] < 100)) & (scan[:,1] < 2000)
                 car_right_condition = ((-100 < scan[:,0]) & (scan[:,0] < -90)) & (scan[:,1] < 2000)
                 detect_condition = ((-100 < scan[:,0]) & (scan[:,0] < 100)) & (scan[:,1] < 2000)
-                straight_condition = ((-100 < scan[:,0]) & (scan[:,0] < 100)) & (scan[:,1] < 1500)
+                straight_condition = ((-100 < scan[:,0]) & (scan[:,0] < 100)) & (scan[:,1] < 1200)
+
+                left_condition = (((-100 < scan[:,0]) & (scan[:,0] < -80)))  & (scan[:,1] < 1000)
+                right_condition = (((80 < scan[:,0]) & (scan[:,0] < 100)))  & (scan[:,1] < 1000)
+                
+
+                stop_condition = (((-90 < scan[:,0]) & (scan[:,0] < -80)) | ((80 < scan[:,0]) & (scan[:,0] < 90)))  & (scan[:,1] < 1000)
+
                 if parking_stage == -1: # Lidar Test
                     # 
                     self.parking_speed = 0
@@ -274,13 +290,13 @@ class DoWork:
                         
                         if detect_cnt == 0:
                             obj = False
-                            print('car not detected')
+                            # print('car not detected')
                             pass
                         else:
                             detect_cnt -= 1
                     else:
-                        if detect_cnt == 10:
-                            print('car detected')
+                        if detect_cnt == 5:
+                            # print('car detected')
                             if obj == False:
                                 new_car_cnt += 1
                             obj = True
@@ -289,15 +305,32 @@ class DoWork:
                         
                     if new_car_cnt == 2:
                         print("Detect two car!")
+                        # rest
+                        self.parking_speed = 0
+                        self.direction = 0
+                        message = 'a' + str(self.direction) +  's' + str(self.parking_speed) +'o0'
+                        self.serial.write(message.encode())
+                        time.sleep(0.3)
                         parking_stage = 1
                         obj = False
-                        if len(np.where(car_left_condition)[0]):
+                        for i in range(5):
+                            left_cnt += len(scan[np.where(car_left_condition)])
+                            right_cnt += len(scan[np.where(car_right_condition)])
+
+                        if left_cnt > right_cnt:
                             parking_direction = -1
-                        elif len(np.where(car_right_condition)[0]):
-                            parking_direction = 1
                         else:
-                            parking_direction = 0
-                        pass
+                            parking_direction = 1
+
+
+                        # if len(np.where(car_left_condition)[0]):
+                            
+                        #     parking_direction = -1
+                        # elif len(np.where(car_right_condition)[0]):
+                        #     parking_direction = 1
+                        # else:
+                        #     parking_direction = 0
+                        # pass
 
                     self.direction = 0 # 선 따라가도록 바꿀 예정
                     
@@ -319,7 +352,7 @@ class DoWork:
                     pass
                 
                 elif parking_stage == 2:
-                    self.direction = 0
+                    self.direction = -7 * parking_direction
                     self.parking_speed = parking_speed
                     
                     if len(np.where(straight_condition)[0]) == 0:
@@ -331,14 +364,88 @@ class DoWork:
                         parking_stage = 3
                 
                 elif parking_stage == 3:
-                    scan = scan[np.where(detect_condition)]
-                    steering_angle = parking_steering_angle(scan, queue_key)
-                    self.direction = return_road_direction(-1 * steering_angle * parking_steering_weight)
-                    self.parking_speed = parking_speed * -1
-                    queue_key = (queue_key + 1) % 10
                     
-                    if len(np.where(near_detect_condition)[0]):
+                    detect_scan = scan[np.where(detect_condition)]
+                    steering_angle = parking_steering_angle(detect_scan, queue_key, total_array)
+                    print(steering_angle)
+                    self.direction = return_parking_direction(-1 * steering_angle)
+                    self.parking_speed = parking_speed * -1
+                    queue_key = (queue_key + 1) % 7
+                    
+                    if len(np.where(left_condition)[0]) and len(np.where(right_condition)[0]):
+
+                        # rest
+                        self.parking_speed = 0
+                        self.direction = 0
+                        message = 'a' + str(self.direction) +  's' + str(self.parking_speed) +'o0'
+                        self.serial.write(message.encode())
+                        time.sleep(0.3)
+
+                        # calculate distance
+                        total_left_scan = []
+                        total_right_scan = []
+                        for i in range(5):
+                            scan = np.array(self.lidar_module.iter_scans())
+
+                            left_condition = (((-100 < scan[:,0]) & (scan[:,0] < -80)))  & (scan[:,1] < 1000)
+                            right_condition = (((80 < scan[:,0]) & (scan[:,0] < 100)))  & (scan[:,1] < 1000)
+
+                            left_scan = scan[np.where(left_condition)]
+                            right_scan = scan[np.where(right_condition)]
+                            
+                            if i == 0:
+                                total_left_scan = left_scan
+                                total_right_scan = right_scan
+                            else:
+                                total_left_scan = np.concatenate((total_left_scan, left_scan), axis = 0)
+                                total_right_scan = np.concatenate((total_right_scan, right_scan), axis = 0)
+                            
+                        left_distance = np.min(total_left_scan[:,1])
+                        right_distance = np.min(total_right_scan[:,1])
+
+                        if(abs(left_distance - right_distance) > distance_threshold):
+                            parking_stage = 4
+                        else:
+                            parking_stage = 5
+                            queue_key = 0
+                            total_array = np.array([[-1, -1, -1]])
+
+                elif parking_stage == 4:
+                    self.direction = 0
+                    self.parking_speed = parking_speed
+                    
+                    if len(np.where(straight_condition)[0]) == 0:
+                        self.parking_speed = 0
+                        self.direction = 0
+                        message = 'a' + str(self.direction) +  's' + str(self.parking_speed) +'o0'
+                        self.serial.write(message.encode())
+                        time.sleep(0.3)
+                        parking_stage = 3     
+
+                elif parking_stage == 5:
+                    scan = np.array(self.lidar_module.iter_scans())
+                    left_condition = (((-100 < scan[:,0]) & (scan[:,0] < -80)))  & (scan[:,1] < 1000)
+                    right_condition = (((80 < scan[:,0]) & (scan[:,0] < 100)))  & (scan[:,1] < 1000)
+                    left_scan = scan[np.where(left_condition)]
+                    right_scan = scan[np.where(right_condition)]
+                    print("left_scan : ", left_scan)
+                    print("right_scan : ", right_scan)
+                    left_angle = good_parking(left_scan, queue_key, total_array)
+                    right_angle = good_parking(right_scan, queue_key, total_array)
+
+                    steering_angle = (left_angle + right_angle) / 2
+
+                    self.parking_speed = -1 * parking_speed
+
+                    self.direction = return_parking_direction(steering_angle)
+
+                    queue_key = (queue_key + 1) % 5
+
+                    if len(np.where(stop_condition)[0]) == 0:
                         parking_stage = 10
+
+
+                
                 
                 elif parking_stage == 10: # finish
                     self.direction = 0
@@ -355,6 +462,7 @@ class DoWork:
                 
                 
                 message = 'a' + str(self.direction) +  's' + str(self.parking_speed) +'o0'
+                # print(message)
                 self.serial.write(message.encode())
                 
                 
@@ -412,7 +520,7 @@ class DoWork:
                 
                 break
             
-            time.sleep((0.0001))
+            time.sleep((0.00003))
         pass
                 
                 

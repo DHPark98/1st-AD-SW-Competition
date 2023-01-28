@@ -26,7 +26,8 @@ path_project = os.path.dirname(os.path.dirname(__file__))
 print(path_project)
 sys.path.append(path_project)
 from before_utils.bird_eye_utils import *
-
+from road_following.Algorithm.img_preprocess import total_function, cvt_binary
+# from road_following.utility import cvt_binary
 # Functions
 def dir_and_speed(input_key, direction, speed):
     brk = 0     # loop break
@@ -87,7 +88,7 @@ def receive_from_Ard():     # Argument : ser ?
 if __name__ == '__main__':
 
     
-    path = '/home/skkcar/Desktop/contest/data_img/car_detection/'     ###
+    path = '/home/skkcar/Desktop/contest/data_img/road_debugging/'     ###
 
     try:
         if not os.path.exists(path):
@@ -171,11 +172,15 @@ if __name__ == '__main__':
             # mapped_besistance from Arduino (rename to direction_cur)
             #direction_cur = receive_from_Ard()
             direction_cur = 0
-
+            bev =bird_convert(img_f, "FRONT")
+            prep_img = total_function(bev)
+            binary_img = cvt_binary(prep_img)
             # img_f_bird = total_function(img_f, 'front')     # image processed front
             #img_b_bird = total_function(img_b, 'back')     # image processed back
             
             cv2.imshow('Video_f', img_f)
+            cv2.imshow("prep_f", prep_img)
+            cv2.imshow("binary_img",  binary_img)
             # cv2.imshow('Video_b', img_b)            
             # cv2.imshow('Video_f_bird', img_f)
             # print(img_p_f.shape)
@@ -196,7 +201,7 @@ if __name__ == '__main__':
             detection_obj = "car"
             img_f_bird_title = "{0}f_bird--{1}--{2}--{3}".format(path, str(message), time_stamp, uuid_cur)
             yolo_title = "{}{}--{}".format(path, detection_obj, time_stamp)
-            cv2.imwrite(yolo_title + ".png", img_f)
+            cv2.imwrite(img_f_bird_title + ".png", bev)
             
             time_prev_write = time.time()
 
