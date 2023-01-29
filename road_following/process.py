@@ -14,7 +14,7 @@ from yolov5.utils.general import non_max_suppression
 from utility import (roi_cutting, preprocess, show_bounding_box, 
                     object_detection, dominant_gradient, cvt_binary, 
                     return_road_direction, is_outside, box_area, total_process, parking_steering_angle,
-                    return_parking_direction, good_parking)
+                    return_parking_direction, good_parking, distinguish_traffic_light)
 from Algorithm.Control import total_control, smooth_direction, strengthen_control
 from Algorithm.img_preprocess import total_function
 from Algorithm.object_avoidance import avoidance
@@ -45,7 +45,7 @@ class DoWork:
         self.serial.baudrate = 9600
         
         # Control
-        self.speed = 80
+        self.speed = 40
         self.speed_value = self.speed
 
         self.parking_speed = 40
@@ -112,13 +112,12 @@ class DoWork:
                 else:
                     cam_img = self.front_camera_module.read()
                     bird_img = bird_convert(cam_img, self.front_cam_name)
-                    
+                    cv2.imshow("bird", bird_img)
                     preprocess_img = total_function(bird_img)
                     binary_img = cvt_binary(bird_img)
                     roi_img = roi_cutting(binary_img)
                     
                     draw_img = cam_img.copy()
-                    
                     outside = int(is_outside(preprocess_img))
 
                     
@@ -129,6 +128,7 @@ class DoWork:
                         pred = self.detect_network(image)
                         pred = non_max_suppression(pred)[0]
                         
+                        pred = distinguish_traffic_light(draw_img, pred)
                         draw_img = show_bounding_box(draw_img, pred)
 
                         _, order_flag = object_detection(pred)
@@ -168,12 +168,12 @@ class DoWork:
 
                     message = 'a' + str(self.direction) +  's' + str(self.speed) + 'o' + str(outside)
                     self.serial.write(message.encode())
+                    print()
                     print(message)
                     
                     cv2.imshow('VideoCombined_detect', draw_img)
                     cv2.imshow('VideoCombined_rf', roi_img)
                     cv2.imshow('VideoCombined_rf2', preprocess_img)
-                    
                     
                     bef_1d, bef_2d, bef_3d = self.direction, bef_1d, bef_2d
                     pass

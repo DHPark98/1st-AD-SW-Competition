@@ -123,6 +123,92 @@ def center_inside(center):
     else:
         return False
 
+
+def distinguish_traffic_light(image, pred):
+    
+    new_pred = np.array([[0,0,0,0,0,0]])
+
+    for *box, cf, cls in pred:
+        cf = cf.item()
+        cls = int(cls.item())
+        p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
+                    
+        if (p1[0]<0):
+            p1 = (0, p1[1])
+        if (p1[1]<0):
+            p1 = (p1[0], 0)
+        if (p2[0]<0):
+            p2 = (0, p2[1])
+        if (p2[1]<0):
+            p2 = (p2[0], 0)
+        
+        if((cls == 1) | (cls == 2)):
+            obj_img = image[p1[1]:p2[1],p1[0]:p2[0],:]
+
+            HSV_frame_for_green = cv2.cvtColor(obj_img, cv2.COLOR_BGR2HSV)
+            HSV_frame_for_red = cv2.cvtColor(obj_img, cv2.COLOR_BGR2HSV)
+            H_g,S_g,V_g = cv2.split(HSV_frame_for_green)
+            H_r,S_r,V_r = cv2.split(HSV_frame_for_red)
+
+            # green
+            H_green_condition = (35<H_g) & (H_g<90)
+            S_green_condition = (S_g>30)
+            V_green_condition = V_g>100
+            green_condition = H_green_condition & S_green_condition & V_green_condition
+
+            V_g[~green_condition] = 0
+
+            H_g[green_condition] = 50
+            S_g[green_condition] = 100
+            V_g[green_condition] = 100
+
+            HSV_frame_for_green[:,:,0] = H_g
+            HSV_frame_for_green[:,:,1] = S_g
+            HSV_frame_for_green[:,:,2] = V_g
+            
+            frame_green_filtered = cv2.cvtColor(HSV_frame_for_green, cv2.COLOR_HSV2BGR)
+
+            # red
+            H_red_condition = (160<H_r) | (H_r<20)
+            S_red_condition = (S_r>30)
+            V_red_condition = V_r>100
+            red_condition = H_red_condition & S_red_condition & V_red_condition
+
+            V_r[~red_condition] = 0
+
+            H_r[red_condition] = 0
+            S_r[red_condition] = 100
+            V_r[red_condition] = 100
+
+            HSV_frame_for_red[:,:,0] = H_r
+            HSV_frame_for_red[:,:,1] = S_r
+            HSV_frame_for_red[:,:,2] = V_r
+            
+            frame_red_filtered = cv2.cvtColor(HSV_frame_for_red, cv2.COLOR_HSV2BGR)
+
+
+            num_red = len(np.where(red_condition)[0])
+            num_green = len(np.where(green_condition)[0])
+            
+            if (num_red > num_green):
+                cls = 2
+            else:
+                cls = 1
+            
+            
+            cv2.imshow("obj_image", obj_img)
+            cv2.imshow("obj_green_filtered", frame_green_filtered)
+            cv2.imshow("obj_red_filtered", frame_red_filtered)
+            
+        new_pred = np.concatenate((new_pred, np.array([[p1[0], p1[1], p2[0], p2[1], cf, cls]])), axis = 0)
+            
+    if(len(new_pred) > 1):
+        new_pred = new_pred[1:]
+    else:
+        return pred
+
+    return torch.tensor(new_pred)
+
 def show_bounding_box(image, pred):
     labels_to_names = {0 : "Crosswalk", 1 : "Green", 2 : "Red", 3 : "Car"}
     
@@ -131,7 +217,10 @@ def show_bounding_box(image, pred):
         cf = cf.item()
         cls = int(cls.item())
         p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
+            
         caption = "{}: {:.4f}".format(labels_to_names[cls], cf)
+        
+
         cv2.rectangle(image, p1, p2, color = (0, 255, 0), thickness = 2)
         cv2.putText(image, caption, (p1[0], p1[1] - 2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), thickness = 1)
         
@@ -139,13 +228,22 @@ def show_bounding_box(image, pred):
     return image
 
 def object_detection(pred): # pred 중 class별로 가장 큰 bbox return
+    
+    
     pred_array = [None, None, None, None] # 0:Crosswalk, 1:Green, 2:Red, 3:Car
     bbox_threshold = [30000, 15000, 15000, 15000] # bbox area
     
     for *box, cf, cls in pred:
         bbox_area = box_area(box)
+        
         cls = int(cls)
-        if bbox_area < bbox_threshold[cls] and cls != 3 : # find object
+        
+        print("bbox area of {}: {}".format(cls, bbox_area))
+        if cls == 0:
+            print("cross walk points : ", box)
+            y2_crosswalk = int(box[3])
+            print("y2_cw : ", y2_crosswalk)
+        if bbox_area > bbox_threshold[cls] and cls != 3 : # find object
             if pred_array[cls] != None and box_area(pred_array[cls]) > bbox_area: 
                 pass
             else:
@@ -154,13 +252,16 @@ def object_detection(pred): # pred 중 class별로 가장 큰 bbox return
         elif (cls == 3 and center_inside(box_center(box)) and
                 box_area(box) > bbox_threshold[cls]): # find object(car)
             pred_array[cls] = box
-    # print(pred_array)
-    if pred_array[0] != None and pred_array[2] != None:
+    print("p0: ",pred_array[0])
+    print("p2: ",pred_array[2])
+    if (pred_array[0] != None) and (pred_array[2] != None) and (y2_crosswalk > 430):    #and y2_crosswalk > 300
         order_flag = 0
+        print("over 430")
     elif pred_array[3] != None:
         order_flag = 2
     else:
         order_flag = 1
+    print("order flag: ", order_flag)
     return pred_array, order_flag
 
             

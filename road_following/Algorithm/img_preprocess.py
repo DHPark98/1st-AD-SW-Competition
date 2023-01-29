@@ -13,7 +13,7 @@ def color_filter(image):
     
    
     # green
-    H_green_condition = (35<H) & (H<90)
+    H_green_condition = (25<H) & (H<90)
     S_green_condition = (S>30)
     V_green_condition = V>100
     green_condition = H_green_condition & S_green_condition & V_green_condition
