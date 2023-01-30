@@ -45,10 +45,10 @@ class DoWork:
         self.serial.baudrate = 9600
         
         # Control
-        self.speed = 40
+        self.speed = 50
         self.speed_value = self.speed
 
-        self.parking_speed = 40
+        self.parking_speed = 50
         self.direction = 0
         
         # Lidar
@@ -123,15 +123,15 @@ class DoWork:
                     
                     order_flag = 1
                     
-                    if self.detect_weight_file != None: # Detection 했을 경우
-                        image = preprocess(cam_img, "test", device = "cpu")
-                        pred = self.detect_network(image)
-                        pred = non_max_suppression(pred)[0]
+                    # if self.detect_weight_file != None: # Detection 했을 경우
+                    #     image = preprocess(cam_img, "test", device = "cpu")
+                    #     pred = self.detect_network(image)
+                    #     pred = non_max_suppression(pred)[0]
                         
-                        pred = distinguish_traffic_light(draw_img, pred)
-                        draw_img = show_bounding_box(draw_img, pred)
+                    #     pred = distinguish_traffic_light(draw_img, pred)
+                    #     draw_img = show_bounding_box(draw_img, pred)
 
-                        _, order_flag = object_detection(pred)
+                    #     _, order_flag = object_detection(pred)
                         
                     road_gradient, bottom_value = dominant_gradient(roi_img, preprocess_img)
                     
@@ -225,7 +225,7 @@ class DoWork:
         
         car_detect_queue = 0
         near_detect_queue = 0
-        parking_stage = 3
+        parking_stage = 0
         new_car_cnt = 0
         obj = False
         parking_direction = 0
@@ -352,7 +352,7 @@ class DoWork:
                     pass
                 
                 elif parking_stage == 2:
-                    self.direction = -7 * parking_direction
+                    self.direction = 0
                     self.parking_speed = parking_speed
                     
                     if len(np.where(straight_condition)[0]) == 0:

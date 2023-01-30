@@ -73,7 +73,7 @@ def total_control(road_direction, model_direction, bottom_value):
     return road_direction
 
 def smooth_direction(bef1, bef2, bef3, cur):
-    average = bef3 * 0.1 + bef2 * 0.2 + bef1 * 0.3 + cur * 0.4
+    average = bef3 * 0.1 + bef2 * 0.3 + bef1 * 0.3 + cur * 0.3
     return round(average)
 
 def moving_log(log): # road change to inside
