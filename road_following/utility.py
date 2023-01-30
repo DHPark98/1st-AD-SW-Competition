@@ -277,6 +277,7 @@ def dominant_gradient(image, pre_image): # 흑백 이미지에서 gradient 값, 
     # img_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     try:
         img_blur = cv2.GaussianBlur(image_original, (0,0),1)
+        # img_blur = image
         img_edge = cv2.Canny(img_blur, 110,180)
     except Exception as e:
         _, _, tb = sys.exc_info()

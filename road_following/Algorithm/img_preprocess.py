@@ -145,6 +145,7 @@ def hide_car_head(image):
 
 def total_function(image):
     image_blured = cv2.GaussianBlur(image, (0,0), 5)
+    # image_blured = image
     if (0):
         image_blured = hide_car_head(image_blured)
     image_filtered = color_filter(image_blured)
@@ -153,7 +154,7 @@ def total_function(image):
     car_hidden = hide_car_head(image_stadium)
     #car_hidden = car_hidden[300:]
     
-    image_gray = cv2.cvtColor(car_hidden, cv2.COLOR_BGR2GRAY)
+    # image_gray = cv2.cvtColor(car_hidden, cv2.COLOR_BGR2GRAY)
     
     #ret, thresh = cv2.threshold(image_gray, 20, 255, cv2.THRESH_BINARY) # thresh : 160
     # cv2.imshow("blur", image_blured)

@@ -15,9 +15,10 @@ from utility import (roi_cutting, preprocess, show_bounding_box,
                     object_detection, dominant_gradient, cvt_binary, 
                     return_road_direction, is_outside, box_area, total_process,
                     distinguish_traffic_light)
-from Algorithm.parking import (detect_parking_car, lidar_condition, near_detect_car,
-                               escape, steering_parking, left_or_right, calculate_distance,
-                               detailed_parking, rest, stop, search_left_right)
+# from Algorithm.parking import (detect_parking_car, lidar_condition, near_detect_car,
+#                                escape, steering_parking, left_or_right, calculate_distance,
+#                                detailed_parking, rest, stop, search_left_right)
+from Algorithm.parking import *
 from Algorithm.Control import total_control, smooth_direction, strengthen_control
 from Algorithm.img_preprocess import total_function
 from Algorithm.object_avoidance import avoidance
@@ -240,6 +241,7 @@ class DoWork:
         distance_threshold = 250
         stop_cnt = 0
         left_right_cnt = 0
+        cnt = 0
         while True:
             try:
                 if self.front_camera_module == None or self.rear_camera_module == None:
@@ -266,13 +268,13 @@ class DoWork:
                 
                 
                 if parking_stage == 0: # Search parking start position
-                    new_car_cnt, car_detect_queue = detect_parking_car(self.lidar_module, detect_cnt,
+                    new_car_cnt, car_detect_queue, detect_cnt, obj = detect_parking_car(self.lidar_module, detect_cnt,
                                                                      new_car_cnt, car_detect_queue, obj)
                     print("New car cnt : ",new_car_cnt) 
                     if new_car_cnt == 2:
                         print("Detect two car!")
                         # rest
-                        rest(self.serial, 0.3)
+                        # rest(self.serial, 0.3)
                         
                         parking_stage = 1
                         
@@ -295,7 +297,7 @@ class DoWork:
                     
                     if near_detect_car(self.lidar_module) == True:
                         # rest
-                        rest(self.serial, 0.3)
+                        # rest(self.serial, 2)
                         
                         parking_stage = 2
                     pass
@@ -305,26 +307,26 @@ class DoWork:
                     self.parking_speed = parking_speed
                     
                     if escape(self.lidar_module) == True:
-                        rest(self.lidar_module, 0.3)
+                        # rest(self.serial, 2)
                         parking_stage = 3
                 
                 elif parking_stage == 3:
-                    self.direction = steering_parking(self.lidar_module, 
+                    self.direction, queue_key, total_array = steering_parking(self.lidar_module, 
                                                       queue_key, total_array)
                     
                     self.parking_speed = parking_speed * -1
                     queue_key = (queue_key + 1) % 7
                     
                     if near_detect_car(self.lidar_module) == True:
-                        rest(self.serial, 0.3)
+                        # rest(self.serial, 2)
                         
                         parking_stage = 2
                 
-                    
-                    if search_left_right(self.lidar_module, left_right_cnt):
-
+                    left_right, left_right_cnt =  search_left_right(self.lidar_module, left_right_cnt)
+                    if left_right == True:
+                        print("Search_left_right")
                         # rest
-                        rest(self.serial, 0.3)
+                        # rest(self.serial, 2)
 
                         # calculate distance
                         left_dist, right_dist = calculate_distance(self.lidar_module)
@@ -341,18 +343,70 @@ class DoWork:
                     self.parking_speed = parking_speed
                     
                     if escape(self.lidar_module) == True:
-                        rest(self.serial, 0.3)
+                        # rest(self.serial, 0.3)
                         parking_stage = 3     
 
                 elif parking_stage == 5:
                     self.parking_speed = -1 * parking_speed
-                    self.direction, total_array = detailed_parking(self.lidar_module, queue_key, total_array)
+                    self.direction, queue_key, total_array = detailed_parking(self.lidar_module, queue_key, total_array)
 
                     queue_key = (queue_key + 1) % 5
                     
-                    if stop(self.lidar_module, stop_cnt) == True:
-                        rest(self.serial, 0.3)
+
+                    is_stop, stop_cnt = stop(self.lidar_module, stop_cnt)
+                    if is_stop == True:
+                        # rest(self.serial, 0.3)
+                        new_car_cnt = 0
+                        detect_cnt = 0
+                        car_detect_queue = 0
+                        obj = False
+                        parking_stage = 6
+                        
+
+                elif parking_stage == 6:
+                    self.direction = 0
+                    self.parking_speed = parking_speed
+                    is_end, cnt = escape_parking(self.lidar_module, cnt)
+
+                    if is_end == True:
+                        parking_stage = 7
+                    
+                    
+                    
+                    
+
+                elif parking_stage == 7:
+                    self.direction = 7
+                    self.parking_speed = parking_speed
+                    new_car, car_detect_queue, detect_cnt, obj = escape_parking2(self.lidar_module,
+                     car_detect_queue, detect_cnt, obj)
+                    if new_car == True:
+                        new_car_cnt = 0
+                        car_detect_queue = 31
+                        detect_cnt = 0
+                        obj = False
+                        cnt = 0
+                        parking_stage = 8
+
+
+                elif parking_stage == 8:
+                    self.direction = -7
+                    self.parking_speed = -1 * parking_speed
+                    rf_condition, car_detect_queue= escape_parking3(self.lidar_module,
+                     car_detect_queue)
+                    print(car_detect_queue)
+                    print(rf_condition)
+                    if near_detect_car(self.lidar_module) == True:
+                        parking_stage = 7
+
+                    if rf_condition == True:
+                        # rest
+                        # rest(self.serial, 2)
+                        
                         parking_stage = 10
+                    
+                
+                    
 
                 
                 

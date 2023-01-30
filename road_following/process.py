@@ -46,7 +46,7 @@ class DoWork:
         self.serial.baudrate = 9600
         
         # Control
-        self.speed = 50
+        self.speed = 250
         self.speed_value = self.speed
 
         self.parking_speed = 50
@@ -124,15 +124,15 @@ class DoWork:
                     
                     order_flag = 1
                     
-                    # if self.detect_weight_file != None: # Detection 했을 경우
-                    #     image = preprocess(cam_img, "test", device = "cpu")
-                    #     pred = self.detect_network(image)
-                    #     pred = non_max_suppression(pred)[0]
+                    if self.detect_weight_file != None: # Detection 했을 경우
+                        image = preprocess(cam_img, "test", device = "cpu")
+                        pred = self.detect_network(image)
+                        pred = non_max_suppression(pred)[0]
                         
-                    #     pred = distinguish_traffic_light(draw_img, pred)
-                    #     draw_img = show_bounding_box(draw_img, pred)
+                        pred = distinguish_traffic_light(draw_img, pred)
+                        draw_img = show_bounding_box(draw_img, pred)
 
-                    #     _, order_flag = object_detection(pred)
+                        _, order_flag = object_detection(pred)
                         
                     road_gradient, bottom_value = dominant_gradient(roi_img, preprocess_img)
                     
