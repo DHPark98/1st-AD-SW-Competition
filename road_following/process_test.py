@@ -51,7 +51,7 @@ class DoWork:
         self.speed = 40
         self.speed_value = self.speed
 
-        self.parking_speed = 40
+        self.parking_speed = 50
         self.direction = 0
         
         # Lidar
@@ -228,11 +228,11 @@ class DoWork:
         
         car_detect_queue = 0
         near_detect_queue = 0
-        parking_stage = 3
+        parking_stage = 0
         new_car_cnt = 0
         obj = False
         parking_direction = 0
-        parking_speed = 40
+        parking_speed = 50
         self.parking_speed = parking_speed
         detect_cnt = 0
         queue_key = 0
@@ -253,21 +253,22 @@ class DoWork:
                 front_cam_img, rear_cam_img = self.front_camera_module.read(), self.rear_camera_module.read() 
                 print("Parking stage : {}".format(parking_stage))
 
-                if parking_stage == -1: # Lidar Test
-                    # 
-                    self.parking_speed = 0
+                # if parking_stage == -1: # Lidar Test
+                #     # 
+                #     self.parking_speed = 0
 
-                    scan = scan[np.where(detect_condition)]
-                    print(parking_steering_angle(scan, queue_key))
+                #     scan = scan[np.where(detect_condition)]
+                #     print(parking_steering_angle(scan, queue_key))
 
-                    queue_key = (queue_key + 1) % 10
+                #     queue_key = (queue_key + 1) % 10
 
-                    pass
+                #     pass
                 
                 
                 if parking_stage == 0: # Search parking start position
                     new_car_cnt, car_detect_queue = detect_parking_car(self.lidar_module, detect_cnt,
-                                                                       new_car_cnt, car_detect_queue)
+                                                                     new_car_cnt, car_detect_queue, obj)
+                    print("New car cnt : ",new_car_cnt) 
                     if new_car_cnt == 2:
                         print("Detect two car!")
                         # rest
@@ -423,7 +424,7 @@ class DoWork:
                 
                 break
             
-            time.sleep((0.00003))
+            # time.sleep((0.00001))
         pass
                 
                 

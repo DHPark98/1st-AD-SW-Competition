@@ -13,9 +13,9 @@ from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import non_max_suppression
 from utility import (roi_cutting, preprocess, show_bounding_box, 
                     object_detection, dominant_gradient, cvt_binary, 
-                    return_road_direction, is_outside, box_area, total_process, parking_steering_angle,
-                    return_parking_direction, good_parking, distinguish_traffic_light)
-from Algorithm.parking import (detect_parking_car)
+                    return_road_direction, is_outside, box_area, total_process,
+                    distinguish_traffic_light)
+from Algorithm.parking import (detect_parking_car, parking_steering_angle, return_parking_direction, good_parking)
 from Algorithm.Control import total_control, smooth_direction, strengthen_control
 from Algorithm.img_preprocess import total_function
 from Algorithm.object_avoidance import avoidance
@@ -254,7 +254,7 @@ class DoWork:
                 scan = np.array(self.lidar_module.iter_scans())
                     
                 car_search_condition = (((-100 < scan[:,0]) & (scan[:,0] < -90)) | ((90 < scan[:,0]) & (scan[:,0] < 100)))  & (scan[:,1] < 2000)
-                near_detect_condition = ((-100 < scan[:,0]) & (scan[:,0] < 100)) & (scan[:,1] < 400)
+                near_detect_condition = ((-100 < scan[:,0]) & (scan[:,0] < 100)) & (scan[:,1] < 300)
                 car_left_condition = ((90 < scan[:,0]) & (scan[:,0] < 100)) & (scan[:,1] < 2000)
                 car_right_condition = ((-100 < scan[:,0]) & (scan[:,0] < -90)) & (scan[:,1] < 2000)
                 detect_condition = ((-100 < scan[:,0]) & (scan[:,0] < 100)) & (scan[:,1] < 2000)
@@ -288,6 +288,8 @@ class DoWork:
                     if car_detect_queue == 0:
                         
                         if detect_cnt == 0:
+                            if obj == True:
+                                new_car_cnt += 1
                             obj = False
                             # print('car not detected')
                             pass
@@ -296,8 +298,8 @@ class DoWork:
                     else:
                         if detect_cnt == 5:
                             # print('car detected')
-                            if obj == False:
-                                new_car_cnt += 1
+                            # if obj == False:
+                            #     new_car_cnt += 1
                             obj = True
                         else:
                             detect_cnt += 1
@@ -371,6 +373,17 @@ class DoWork:
                     self.parking_speed = parking_speed * -1
                     queue_key = (queue_key + 1) % 7
                     
+                    if len(np.where(near_detect_condition)[0]):
+                        
+                        # rest
+                        self.parking_speed = 0
+                        self.direction = 0
+                        message = 'a' + str(self.direction) +  's' + str(self.parking_speed) +'o0'
+                        self.serial.write(message.encode())
+                        time.sleep(0.3)
+                        
+                        parking_stage = 2
+
                     if len(np.where(left_condition)[0]) and len(np.where(right_condition)[0]):
 
                         # rest

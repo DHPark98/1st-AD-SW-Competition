@@ -1,42 +1,53 @@
 import numpy as np
 import time
-
+import sys
 
 def lidar_condition(min_angle, max_angle, search_distance, scan):
-    condition = (((min_angle < scan[:,0]) & (scan[:,0] < right_angle)) &
+    condition = (((min_angle < scan[:,0]) & (scan[:,0] < max_angle)) &
+                 (scan[:,1] < search_distance))
+    return condition
+def lidar_condition2(min_angle1, max_angle1, min_angle2, max_angle2, search_distance, scan):
+    condition = ((((min_angle1 < scan[:,0]) & (scan[:,0] < max_angle1)) | ((min_angle2 < scan[:,0]) & (scan[:,0] < max_angle2))) &
                  (scan[:,1] < search_distance))
     return condition
 
-def detect_parking_car(lidar_module, detect_cnt, new_car_cnt, detect_queue):
-    scan = np.array(lidar_module.iter_scans())
-    car_search_condition = (lidar_condition(-100, -90, 2000, scan)
-                            | lidar_condition(90, 100, 2000, scan))
-    if len(np.where(car_search_condition)[0]):
-        car_detect_queue = (car_detect_queue * 2 + 1) % 32
-    else:
-        car_detect_queue = (car_detect_queue * 2) % 32
-
-    if car_detect_queue == 0:
+def detect_parking_car(lidar_module, detect_cnt, new_car_cnt, car_detect_queue, obj):
+    try:
+        scan = np.array(lidar_module.iter_scans())
+        # print(lidar_condition(-100, -90, 2000, scan))
+        # print('\n')
+        # print((((-100 < scan[:,0]) & (scan[:,0] < -90)) | ((90 < scan[:,0]) & (scan[:,0] < 100)))  & (scan[:,1] < 2000))
+        car_search_condition = lidar_condition2(-100, -90, 90, 100, 2000, scan)
         
-        if detect_cnt == 0:
-            if obj == True:
-                new_car_cnt += 1
-            obj = False
-            # print('car not detected')
-            pass
+        if len(np.where(car_search_condition)[0]):
+            car_detect_queue = (car_detect_queue * 2 + 1) % 32
         else:
-            detect_cnt -= 1
-    else:
-        if detect_cnt == 5:
-            # print('car detected')
-            # if obj == False:
-            #     new_car_cnt += 1
-            obj = True
-        else:
-            detect_cnt += 1
-            
-    return new_car_cnt, detect_queue
+            car_detect_queue = (car_detect_queue * 2) % 32
 
+        if car_detect_queue == 0:
+            
+            if detect_cnt == 0:
+                # if obj == True:
+                #     new_car_cnt += 1
+                obj = False
+                # print('car not detected')
+                pass
+            else:
+                detect_cnt -= 1
+        else:
+            if detect_cnt == 5:
+                # print('car detected')
+                if obj == False:
+                    new_car_cnt += 1
+                obj = True
+            else:
+                detect_cnt += 1
+                
+        return new_car_cnt, car_detect_queue
+    except Exception as e:
+        _, _, tb = sys.exc_info()
+        print("process error = {}, error line = {}".format(e, tb.tb_lineno))
+        print()
 def left_or_right(lidar_module, left_cnt, right_cnt):
     scan = np.array(lidar_module.iter_scans())
     car_left_condition = lidar_condition(90, 100, 2000)
@@ -196,7 +207,8 @@ def detailed_parking(lidar_module, queue_key, total_array):
 
 def stop(lidar_module, stop_cnt):
     scan = np.array(lidar_module.iter_scans())
-    stop_condition = lidar_condition(-90, -80, 1000, scan) | lidar_condition(80, 90, 1000, scan)
+    
+    stop_condition = lidar_condition2(-90, -80, 80, 90, 1000, scan)
     
     if len(np.where(stop_condition)[0]) == 0:
         stop_cnt += 1

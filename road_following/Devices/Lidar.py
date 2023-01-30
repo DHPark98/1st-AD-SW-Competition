@@ -47,7 +47,7 @@ _HEALTH_STATUSES = {
 class RPLidarException(Exception):
     '''Basic exception class for RPLidar'''
 
-class LidarModule():
+class LidarModule(): # baudrate = 115200
     def __init__(self, lidar_port = '/dev/ttyUSB1', baudrate=115200, timeout=1, logger=None):
         self.lidar_port = lidar_port
         self._serial = None
