@@ -11,18 +11,11 @@ rf_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(rf_dir, "yolov5"))
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import non_max_suppression
-from utility import (roi_cutting, preprocess, show_bounding_box, 
-                    object_detection, dominant_gradient, cvt_binary, 
-                    return_road_direction, is_outside, box_area, total_process,
-                    distinguish_traffic_light)
-# from Algorithm.parking import (detect_parking_car, lidar_condition, near_detect_car,
-#                                escape, steering_parking, left_or_right, calculate_distance,
-#                                detailed_parking, rest, stop, search_left_right)
-from Algorithm.parking import *
-from Algorithm.Control import total_control, smooth_direction, strengthen_control
+from utility import *
+from Algorithm.parking_2 import *
+from Algorithm.Control import *
 from Algorithm.img_preprocess import total_function
 from Algorithm.object_avoidance import avoidance
-from Algorithm.ideal_parking import idealparking
 from Devices.Lidar import LidarModule
 class DoWork:
     def __init__(self, play_name, front_cam_name, rear_cam_name, rf_weight_file = None, detect_weight_file = None):
@@ -227,21 +220,16 @@ class DoWork:
         
 
         
-        car_detect_queue = 0
-        near_detect_queue = 0
+
         parking_stage = 0
-        new_car_cnt = 0
-        obj = False
         parking_direction = 0
         parking_speed = 50
         self.parking_speed = parking_speed
-        detect_cnt = 0
-        queue_key = 0
-        total_array = np.array([[-1, -1, -1]])
         distance_threshold = 250
-        stop_cnt = 0
-        left_right_cnt = 0
-        cnt = 0
+        
+        global detect_cnt, new_car_cnt, obj, car_detect_queue, queue_key, total_array, stop_cnt, left_right_cnt, cnt
+        parameter_initialize()
+        
         while True:
             try:
                 if self.front_camera_module == None or self.rear_camera_module == None:
@@ -259,22 +247,13 @@ class DoWork:
                 #     # 
                 #     self.parking_speed = 0
 
-                #     scan = scan[np.where(detect_condition)]
-                #     print(parking_steering_angle(scan, queue_key))
-
-                #     queue_key = (queue_key + 1) % 10
-
                 #     pass
                 
                 
                 if parking_stage == 0: # Search parking start position
-                    new_car_cnt, car_detect_queue, detect_cnt, obj = detect_parking_car(self.lidar_module, detect_cnt,
-                                                                     new_car_cnt, car_detect_queue, obj)
-                    print("New car cnt : ",new_car_cnt) 
+                    new_car_cnt= detect_parking_car(self.lidar_module)
                     if new_car_cnt == 2:
                         print("Detect two car!")
-                        # rest
-                        # rest(self.serial, 0.3)
                         
                         parking_stage = 1
                         
@@ -296,9 +275,7 @@ class DoWork:
                     self.direction = parking_direction * 7
                     
                     if near_detect_car(self.lidar_module) == True:
-                        # rest
-                        # rest(self.serial, 2)
-                        
+                        parameter_initialize()
                         parking_stage = 2
                     pass
                 
@@ -306,8 +283,8 @@ class DoWork:
                     self.direction = -7 * parking_direction
                     self.parking_speed = parking_speed
                     
-                    if escape(self.lidar_module) == True:
-                        # rest(self.serial, 2)
+                    if escape_cur_position(self.lidar_module) == True:
+                        parameter_initialize()
                         parking_stage = 3
                 
                 elif parking_stage == 3:
@@ -315,94 +292,81 @@ class DoWork:
                                                       queue_key, total_array)
                     
                     self.parking_speed = parking_speed * -1
-                    queue_key = (queue_key + 1) % 7
+                    queue_key = (queue_key + 1) % 10
                     
                     if near_detect_car(self.lidar_module) == True:
-                        # rest(self.serial, 2)
-                        
+                        parameter_initialize()
                         parking_stage = 2
                 
                     left_right, left_right_cnt =  search_left_right(self.lidar_module, left_right_cnt)
                     if left_right == True:
                         print("Search_left_right")
-                        # rest
-                        # rest(self.serial, 2)
-
                         # calculate distance
                         left_dist, right_dist = calculate_distance(self.lidar_module)
 
                         if(abs(left_dist - right_dist) > distance_threshold):
+                            parameter_initialize()
                             parking_stage = 4
                         else:
+                            parameter_initialize()
                             parking_stage = 5
-                            queue_key = 0
-                            total_array = np.array([[-1, -1, -1]])
 
                 elif parking_stage == 4:
                     self.direction = 0
                     self.parking_speed = parking_speed
                     
-                    if escape(self.lidar_module) == True:
-                        # rest(self.serial, 0.3)
+                    if escape_cur_position(self.lidar_module) == True:
                         parking_stage = 3     
 
                 elif parking_stage == 5:
-                    self.parking_speed = -1 * parking_speed
-                    self.direction, queue_key, total_array = detailed_parking(self.lidar_module, queue_key, total_array)
+                    self.parking_speed = -30
+                    self.direction = detailed_parking(self.lidar_module)
 
-                    queue_key = (queue_key + 1) % 5
-                    
+                    queue_key = (queue_key + 1) % 10
 
-                    is_stop, stop_cnt = stop(self.lidar_module, stop_cnt)
-                    if is_stop == True:
-                        # rest(self.serial, 0.3)
-                        new_car_cnt = 0
-                        detect_cnt = 0
-                        car_detect_queue = 0
-                        obj = False
+                    if stop(self.lidar_module) == True:
+                        
+                        
+                        # reboot lidar and sleep
+                        self.lidar_module.lidar_finish()
+                        rest(self.serial, 3)
+                        self.lidar_start()
+                        
+                        
+                        parameter_initialize()
                         parking_stage = 6
+                        
                         
 
                 elif parking_stage == 6:
                     self.direction = 0
                     self.parking_speed = parking_speed
-                    is_end, cnt = escape_parking(self.lidar_module, cnt)
 
-                    if is_end == True:
+                    if escape_parking_area1(self.lidar_module) == True:
+                        parameter_initialize()
+                        car_detect_queue = 31
+                        
                         parking_stage = 7
-                    
-                    
-                    
-                    
+
 
                 elif parking_stage == 7:
                     self.direction = 7
                     self.parking_speed = parking_speed
-                    new_car, car_detect_queue, detect_cnt, obj = escape_parking2(self.lidar_module,
-                     car_detect_queue, detect_cnt, obj)
-                    if new_car == True:
-                        new_car_cnt = 0
-                        car_detect_queue = 31
-                        detect_cnt = 0
-                        obj = False
-                        cnt = 0
+
+                    if escape_parking_area2(self.lidar_module) == True:
+                        parameter_initialize()
                         parking_stage = 8
 
 
                 elif parking_stage == 8:
                     self.direction = -7
                     self.parking_speed = -1 * parking_speed
-                    rf_condition, car_detect_queue= escape_parking3(self.lidar_module,
-                     car_detect_queue)
-                    print(car_detect_queue)
-                    print(rf_condition)
                     if near_detect_car(self.lidar_module) == True:
+                        parameter_initialize()
                         parking_stage = 7
 
-                    if rf_condition == True:
-                        # rest
-                        # rest(self.serial, 2)
-                        
+                    if escape_parking_area3(self.lidar_module) == True:
+                        parameter_initialize()
                         parking_stage = 10
                     
                 
@@ -442,7 +406,8 @@ class DoWork:
                     cv2.destroyAllWindows()
                 if self.lidar_module:
                     self.lidar_module.lidar_finish()
-                print("Exception error : ", e)
+                _, _, tb = sys.exc_info()
+                print("process error = {}, error line = {}".format(e, tb.tb_lineno))
                 end_message = "a0s0o0"
                 self.serial.write(end_message.encode())
                 self.serial.close()
