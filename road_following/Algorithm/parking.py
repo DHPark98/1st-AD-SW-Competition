@@ -258,10 +258,10 @@ def escape_parking(lidar_module, cnt):
 def escape_parking2(lidar_module, car_detect_queue, detect_cnt, obj):
     scan = np.array(lidar_module.iter_scans())
     rear_condition = lidar_condition(-90, 0, 1000, scan)
+    print(scan)
     
-
-    if len(np.where(rear_condition)[0]):
-        car_detect_queue = (car_detect_queue * 2 + 1) % 32
+    if len(np.where(rear_condition)[0]): 
+        car_detect_queue = (car_detect_queue * 2 + 1) % 32 
     else:
         car_detect_queue = (car_detect_queue * 2) % 32
 

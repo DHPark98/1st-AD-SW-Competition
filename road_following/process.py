@@ -358,6 +358,15 @@ class DoWork:
                         detect_cnt = 0
                         car_detect_queue = 0
                         obj = False
+                        for i in range(10):
+                            self.direction = 0
+                            self.parking_speed = 0
+                            message = 'a' + str(self.direction) +  's' + str(self.parking_speed) +'o0'
+                            # print(message)
+                            self.serial.write(message.encode())
+               
+                            scan = np.array(self.lidar_module.iter_scans())
+
                         parking_stage = 6
                         
 
@@ -376,6 +385,9 @@ class DoWork:
                 elif parking_stage == 7:
                     self.direction = 7
                     self.parking_speed = parking_speed
+                    detect_cnt = 5
+                    car_detect_queue = 31
+                    obj = False
                     new_car, car_detect_queue, detect_cnt, obj = escape_parking2(self.lidar_module,
                      car_detect_queue, detect_cnt, obj)
                     if new_car == True:

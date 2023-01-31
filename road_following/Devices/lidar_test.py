@@ -6,7 +6,7 @@ import numpy as np
 from Camera import CameraModule
 import cv2
 import time
-lidar_module = LidarModule(lidar_port='/dev/tty.usbserial-110')
+lidar_module = LidarModule(lidar_port='/dev/ttyUSB1')
 camera_module = CameraModule(width=640, height=480)
 camera_module.open_cam(0)
 
@@ -20,6 +20,7 @@ while True:
     try:
         cam_img = camera_module.read()
         scan = np.array(lidar_module.iter_scans())
+        print(scan)
         car_search_condition = (((50 < scan[:,0]) & (scan[:,0] < 60)) & (scan[:,1] < 300))
         if len(np.where(car_search_condition)[0]):
             car_detect_queue = (car_detect_queue * 2 + 1) % 32
