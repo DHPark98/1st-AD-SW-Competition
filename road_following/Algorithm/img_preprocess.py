@@ -21,7 +21,7 @@ def color_filter(image):
     S[green_condition] = 100
     V[green_condition] = 100
     # white
-    V_white_condition = V>200#165
+    V_white_condition = V>165#200
     white_condition = V_white_condition
     H[V_white_condition] = 0
     S[V_white_condition] = 0
@@ -173,3 +173,25 @@ def cvt_binary(image):
     
     return img_binary
 
+def total_function_parking(image):
+    image_blured = cv2.GaussianBlur(image, (0,0), 5)
+    # image_blured = image
+    if (0):
+        image_blured = hide_car_head(image_blured)
+    image_filtered = color_filter(image_blured)
+    image_no_black = remove_black(image_filtered)
+    image_stadium = only_stadium(image_no_black)
+    car_hidden = hide_car_head(image_stadium)
+    #car_hidden = car_hidden[300:]
+    
+    # image_gray = cv2.cvtColor(car_hidden, cv2.COLOR_BGR2GRAY)
+    
+    #ret, thresh = cv2.threshold(image_gray, 20, 255, cv2.THRESH_BINARY) # thresh : 160
+    cv2.imshow("blur", image_blured)
+    cv2.imshow("filter", image_filtered)
+    cv2.imshow("noblack", image_no_black)
+    cv2.imshow("stadium", image_stadium)
+    cv2.imshow("carhidden", car_hidden)
+
+
+    return car_hidden 

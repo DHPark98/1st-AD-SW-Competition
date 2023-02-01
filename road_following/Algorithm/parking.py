@@ -17,7 +17,7 @@ def detect_parking_car(lidar_module, detect_cnt, new_car_cnt, car_detect_queue, 
         # print(lidar_condition(-100, -90, 2000, scan))
         # print('\n')
         # print((((-100 < scan[:,0]) & (scan[:,0] < -90)) | ((90 < scan[:,0]) & (scan[:,0] < 100)))  & (scan[:,1] < 2000))
-        car_search_condition = lidar_condition2(-100, -90, 90, 100, 2000, scan)
+        car_search_condition = lidar_condition2(-110, -100, 100, 110, 2000, scan)
         
         if len(np.where(car_search_condition)[0]):
             car_detect_queue = (car_detect_queue * 2 + 1) % 32
@@ -63,7 +63,7 @@ def left_or_right(lidar_module, left_cnt, right_cnt):
 
 def near_detect_car(lidar_module):
     scan = np.array(lidar_module.iter_scans())
-    near_detect_condition = lidar_condition(-100, 100, 400, scan)
+    near_detect_condition = lidar_condition(-100, 100, 500, scan)
     
     if len(np.where(near_detect_condition)[0]):
         return True
@@ -127,6 +127,7 @@ def parking_steering_angle(scan, queue_key, total_array):
             print("Delta error")
             return 0, queue_key, total_array
         # return
+        print("steering angle : {}".format((theta[ret_idx+1] + theta[ret_idx+2])/2))
         return (theta[ret_idx+1] + theta[ret_idx+2])/2, queue_key, total_array
     except Exception as e:
         print("steering angle error")
@@ -143,8 +144,7 @@ def good_parking(scan, queue_key, total_array):
         total_array = np.concatenate((total_array, concat_scan), axis = 0)
         total_array = total_array[np.where(total_array[:,0] != -1)]
         ret_idx = np.argmin(total_array[:,2])
-
-        if len(total_array) < 5:
+        if len(total_array) < 3:
             print("Too short array error")
             return 0, queue_key, total_array
         # return
@@ -152,7 +152,7 @@ def good_parking(scan, queue_key, total_array):
     except Exception as e:
         print("good parking error")
         
-        return 0, queue_key, total_array
+        return None, queue_key, total_array
 
 def return_parking_direction(parking_gradient):
     f = lambda x :  7/20 * x
@@ -193,15 +193,28 @@ def detailed_parking(lidar_module, queue_key, total_array):
     
     left_scan = scan[np.where(left_condition)]
     right_scan = scan[np.where(right_condition)]
+    print(left_scan)
+    print(queue_key)
+    print(total_array)
+
     
     left_angle, queue_key, total_array = good_parking(left_scan, queue_key, total_array)
     right_angle, queue_key, total_array = good_parking(right_scan, queue_key, total_array)
+    print(left_angle, right_angle)
+    try: 
+        steering_angle = (left_angle + right_angle) / 2
+        print("steering angle : {}".format(steering_angle))
+        direction = return_parking_direction(steering_angle)    
+    except Exception as e:
+        
+        if left_angle == None:
+            direction = 7
+        elif right_angle == None:
+            direction = -7
+        else:
+            direction = 0
 
-    steering_angle = (left_angle + right_angle) / 2
-
-    direction = return_parking_direction(steering_angle)
-
-    return direction, queue_key, total_array
+    return direction
 
 def stop(lidar_module, stop_cnt):
     scan = np.array(lidar_module.iter_scans())
@@ -214,23 +227,24 @@ def stop(lidar_module, stop_cnt):
         if stop_cnt > 0:
             stop_cnt -= 1
     
-    if stop_cnt >= 5:
+    if stop_cnt >= 3:
         return True, stop_cnt
     else:
         return False, stop_cnt
 
 def search_left_right(lidar_module, cnt):
     scan = np.array(lidar_module.iter_scans())
-    left_condition = lidar_condition(-100, 80, 1000, scan)
-    right_condition = lidar_condition(80, 100, 1000, scan)
-    
+    left_condition = lidar_condition(-100, -70, 1000, scan)
+    right_condition = lidar_condition(70, 100, 1000, scan)
+    print(cnt)
     if len(np.where(left_condition)[0]) and len(np.where(right_condition)[0]):
+        print("yes")
         cnt += 1
     else:
         if cnt > 0:
             cnt -= 1
     
-    if cnt >= 5:
+    if cnt >= 2:
         return True, cnt
     else:
         return False, cnt
@@ -257,7 +271,7 @@ def escape_parking(lidar_module, cnt):
 
 def escape_parking2(lidar_module, car_detect_queue, detect_cnt, obj):
     scan = np.array(lidar_module.iter_scans())
-    rear_condition = lidar_condition(-90, 0, 1000, scan)
+    rear_condition = lidar_condition(-90, 90, 1200, scan)
     print(scan)
     
     if len(np.where(rear_condition)[0]): 
@@ -285,8 +299,8 @@ def escape_parking2(lidar_module, car_detect_queue, detect_cnt, obj):
 def escape_parking3(lidar_module, car_detect_queue):
     scan = np.array(lidar_module.iter_scans())
 
-
-    rear_condition = lidar_condition(-15, 10, 2500, scan)
+    
+    rear_condition = lidar_condition(-10, 10, 2000, scan)
     
 
     if len(np.where(rear_condition)[0]):
