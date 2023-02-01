@@ -3,11 +3,13 @@ import time
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-from process_2 import detect_cnt, new_car_cnt, obj, car_detect_queue, queue_key, total_array, stop_cnt, left_right_cnt, cnt
 
+from process_2 import detect_cnt, new_car_cnt, obj, car_detect_queue, queue_key, total_array, stop_cnt, left_right_cnt, cnt
+# from process_test import detect_cnt, new_car_cnt, obj, car_detect_queue, queue_key, total_array, stop_cnt, left_right_cnt, cnt
+# from process_test import *
 def lidar_condition(min_angle, max_angle, search_distance, scan):
     condition = (((min_angle < scan[:,0]) & (scan[:,0] < max_angle)) &
-                 (scan[:,1] < searsch_distance))
+                 (scan[:,1] < search_distance))
     return condition
 def lidar_condition2(min_angle1, max_angle1, min_angle2, max_angle2, search_distance, scan):
     condition = ((((min_angle1 < scan[:,0]) & (scan[:,0] < max_angle1)) | ((min_angle2 < scan[:,0]) & (scan[:,0] < max_angle2))) &

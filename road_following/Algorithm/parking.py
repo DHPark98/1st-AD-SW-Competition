@@ -197,11 +197,19 @@ def detailed_parking(lidar_module, queue_key, total_array):
     left_angle, queue_key, total_array = good_parking(left_scan, queue_key, total_array)
     right_angle, queue_key, total_array = good_parking(right_scan, queue_key, total_array)
 
-    steering_angle = (left_angle + right_angle) / 2
+    try: 
+        steering_angle = (left_angle + right_angle) / 2
+        direction = return_parking_direction(steering_angle)    
+    except Exception as e:
+        
+        if left_angle == None:
+            direction = 7
+        elif right_angle == None:
+            direction = -7
+        else:
+            direction = 0
 
-    direction = return_parking_direction(steering_angle)
-
-    return direction, queue_key, total_array
+    return direction
 
 def stop(lidar_module, stop_cnt):
     scan = np.array(lidar_module.iter_scans())

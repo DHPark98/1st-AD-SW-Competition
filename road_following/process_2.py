@@ -288,8 +288,7 @@ class DoWork:
                         parking_stage = 3
                 
                 elif parking_stage == 3:
-                    self.direction, queue_key, total_array = steering_parking(self.lidar_module, 
-                                                      queue_key, total_array)
+                    self.direction = steering_parking(self.lidar_module)
                     
                     self.parking_speed = parking_speed * -1
                     queue_key = (queue_key + 1) % 10

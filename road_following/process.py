@@ -11,11 +11,7 @@ rf_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(rf_dir, "yolov5"))
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import non_max_suppression
-from utility import (roi_cutting, preprocess, show_bounding_box, 
-                    object_detection, dominant_gradient, cvt_binary, 
-                    return_road_direction, is_outside, box_area, total_process,
-                    distinguish_traffic_light)
-
+from utility import *
 from Algorithm.parking import *
 from Algorithm.Control import total_control, smooth_direction, strengthen_control
 from Algorithm.img_preprocess import total_function
@@ -145,10 +141,8 @@ class DoWork:
                         print(message)
                         continue    
 
-                    
-                    # print('grad: ',road_gradient)
-                    # print('bottom: ', bottom_value)
                     road_direction = return_road_direction(road_gradient)
+                    
                     # model_direction = torch.argmax(self.rf_network.run(preprocess(roi_img, mode = "test"))).item() - 7
                     # final_direction = total_control(road_direction, model_direction, bottom_value)
                     final_direction = strengthen_control(road_direction, bottom_value)
@@ -226,7 +220,6 @@ class DoWork:
 
         
         car_detect_queue = 0
-        near_detect_queue = 0
         parking_stage = 0
         new_car_cnt = 0
         obj = False
@@ -271,8 +264,6 @@ class DoWork:
                     print("New car cnt : ",new_car_cnt) 
                     if new_car_cnt == 2:
                         print("Detect two car!")
-                        # rest
-                        # rest(self.serial, 0.3)
                         
                         parking_stage = 1
                         
@@ -294,8 +285,6 @@ class DoWork:
                     self.direction = parking_direction * 7
                     
                     if near_detect_car(self.lidar_module) == True:
-                        # rest
-                        # rest(self.serial, 2)
                         
                         parking_stage = 2
                     pass
@@ -305,7 +294,6 @@ class DoWork:
                     self.parking_speed = parking_speed
                     
                     if escape(self.lidar_module) == True:
-                        # rest(self.serial, 2)
                         parking_stage = 3
                 
                 elif parking_stage == 3:
@@ -313,18 +301,15 @@ class DoWork:
                                                       queue_key, total_array)
                     
                     self.parking_speed = parking_speed * -1
-                    queue_key = (queue_key + 1) % 7
+                    queue_key = (queue_key + 1) % 10
                     
                     if near_detect_car(self.lidar_module) == True:
-                        # rest(self.serial, 2)
                         
                         parking_stage = 2
                 
                     left_right, left_right_cnt =  search_left_right(self.lidar_module, left_right_cnt)
                     if left_right == True:
                         print("Search_left_right")
-                        # rest
-                        # rest(self.serial, 2)
 
                         # calculate distance
                         left_dist, right_dist = calculate_distance(self.lidar_module)
@@ -341,31 +326,25 @@ class DoWork:
                     self.parking_speed = parking_speed
                     
                     if escape(self.lidar_module) == True:
-                        # rest(self.serial, 0.3)
                         parking_stage = 3     
 
                 elif parking_stage == 5:
                     self.parking_speed = -1 * parking_speed
                     self.direction, queue_key, total_array = detailed_parking(self.lidar_module, queue_key, total_array)
 
-                    queue_key = (queue_key + 1) % 5
+                    queue_key = (queue_key + 1) % 10
                     
 
                     is_stop, stop_cnt = stop(self.lidar_module, stop_cnt)
                     if is_stop == True:
-                        # rest(self.serial, 0.3)
                         new_car_cnt = 0
                         detect_cnt = 0
                         car_detect_queue = 0
                         obj = False
-                        for i in range(10):
-                            self.direction = 0
-                            self.parking_speed = 0
-                            message = 'a' + str(self.direction) +  's' + str(self.parking_speed) +'o0'
-                            # print(message)
-                            self.serial.write(message.encode())
-               
-                            scan = np.array(self.lidar_module.iter_scans())
+                        
+                        self.lidar_module.lidar_finish()
+                        rest(self.serial, 3)
+                        self.lidar_start()
 
                         parking_stage = 6
                         
@@ -404,14 +383,10 @@ class DoWork:
                     self.parking_speed = -1 * parking_speed
                     rf_condition, car_detect_queue= escape_parking3(self.lidar_module,
                      car_detect_queue)
-                    print(car_detect_queue)
-                    print(rf_condition)
                     if near_detect_car(self.lidar_module) == True:
                         parking_stage = 7
 
                     if rf_condition == True:
-                        # rest
-                        # rest(self.serial, 2)
                         
                         parking_stage = 10
                     
@@ -438,8 +413,6 @@ class DoWork:
                 
                 cv2.imshow("video_original_f", front_cam_img)
                 cv2.imshow("video_original_r", rear_cam_img)
-                # cv2.imshow("video_binary_f", front_prep_img)
-                # cv2.imshow("video_binary_r", rear_prep_img)
                 
                 
                 
