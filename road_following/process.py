@@ -11,10 +11,7 @@ rf_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(rf_dir, "yolov5"))
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.general import non_max_suppression
-from utility import (roi_cutting, preprocess, show_bounding_box, 
-                    object_detection, dominant_gradient, cvt_binary, 
-                    return_road_direction, is_outside, box_area, total_process,
-                    distinguish_traffic_light)
+from utility import *
 
 from Algorithm.parking import *
 from Algorithm.Control import total_control, smooth_direction, strengthen_control
@@ -47,7 +44,7 @@ class DoWork:
         self.serial.baudrate = 9600
         
         # Control
-        self.speed = 40
+        self.speed = 255
         self.speed_value = self.speed
 
         self.parking_speed = 50
@@ -133,8 +130,8 @@ class DoWork:
                         pred = distinguish_traffic_light(draw_img, pred)
                         draw_img = show_bounding_box(draw_img, pred)
 
-                        _, order_flag = object_detection(pred)
-                        
+                        detect, order_flag, is_crosswalk = object_detection(pred)
+                    
                     road_gradient, bottom_value = dominant_gradient(roi_img, preprocess_img)
                     
 
@@ -144,17 +141,37 @@ class DoWork:
                         self.serial.write(message.encode())
                         print(message)
                         continue    
+                    if is_crosswalk == True:
+                        # road_direction = return_road_direction(road_gradient)
+                        # print(road_gradient)
+                        # print(road_direction)
+                        # final_direction = road_direction
+                        if detect[1] != None:
+                            final_direction = int(box_control(detect[1]))
+                        elif detect[2] != None:
+                            final_direction = int(box_control(detect[2]))
+                        else:
+                            final_direction = 0
+                        print(final_direction)
+                    else:
+                        
+                        road_direction = return_road_direction(road_gradient)
+                        print(road_gradient)
+                        print(road_direction)
+                        final_direction = strengthen_control(road_direction, road_gradient, bottom_value)
+                        print(final_direction)
 
-                    
+
                     # print('grad: ',road_gradient)
                     # print('bottom: ', bottom_value)
-                    road_direction = return_road_direction(road_gradient)
+                    
                     # model_direction = torch.argmax(self.rf_network.run(preprocess(roi_img, mode = "test"))).item() - 7
                     # final_direction = total_control(road_direction, model_direction, bottom_value)
-                    final_direction = strengthen_control(road_direction, bottom_value)
+                    
                     if order_flag == 0: # stop
                         self.direction = 0
                         self.speed = 0
+                        print("is stop?")
                         pass
                     elif order_flag == 1: # go
                         # self.direction = final_direction
@@ -231,7 +248,7 @@ class DoWork:
         new_car_cnt = 0
         obj = False
         parking_direction = 0
-        parking_speed = 50
+        parking_speed = 0
         self.parking_speed = parking_speed
         detect_cnt = 0
         queue_key = 0

@@ -231,7 +231,7 @@ def object_detection(pred): # pred 중 class별로 가장 큰 bbox return
     
     
     pred_array = [None, None, None, None] # 0:Crosswalk, 1:Green, 2:Red, 3:Car
-    bbox_threshold = [30000, 15000, 15000, 15000] # bbox area
+    bbox_threshold = [30000, 5000, 5000, 15000] # bbox area
     
     for *box, cf, cls in pred:
         bbox_area = box_area(box)
@@ -252,8 +252,10 @@ def object_detection(pred): # pred 중 class별로 가장 큰 bbox return
         elif (cls == 3 and center_inside(box_center(box)) and
                 box_area(box) > bbox_threshold[cls]): # find object(car)
             pred_array[cls] = box
-    print("p0: ",pred_array[0])
+    print("p0: ",pred_array[0],)
+    print("p1: ",pred_array[1])
     print("p2: ",pred_array[2])
+    print("p3: ",pred_array[3])
     if (pred_array[0] != None) and (pred_array[2] != None) and (y2_crosswalk > 430):    #and y2_crosswalk > 300
         order_flag = 0
         print("over 430")
@@ -261,8 +263,12 @@ def object_detection(pred): # pred 중 class별로 가장 큰 bbox return
         order_flag = 2
     else:
         order_flag = 1
+    if (pred_array[0] != None) and (y2_crosswalk > 430):
+        is_crosswalk = True
+    else:
+        is_crosswalk = False
     print("order flag: ", order_flag)
-    return pred_array, order_flag
+    return pred_array, order_flag, is_crosswalk
 
             
             
@@ -295,7 +301,7 @@ def dominant_gradient(image, pre_image): # 흑백 이미지에서 gradient 값, 
         return None, None
         
     try:
-        lines = cv2.HoughLines(img_edge,1,np.pi/180,30)
+        lines = cv2.HoughLines(img_edge,1,np.pi/180,25)
 
         angles = []
         bottom_flag = np.zeros((640,))
@@ -444,7 +450,23 @@ def total_process(image, mode = "FRONT"):
 
 
 
-    
+def box_control(box, mode = 'traffic'):
+    if mode == 'traffic':
+        bottom_x = box[2].item()
+        
+        base_bottom_x = 320
+        direction_bias = (bottom_x - base_bottom_x) * 7/160
+        print("direction bias :", direction_bias)
+        
+        direction = int(direction_bias)
+        direction = 7 if direction >= 7 else direction
+        direction = -7 if direction <= -7 else direction
+        return direction
+        pass
+    if mode == 'in_out':
+        pass
+
+    pass
 
 
     

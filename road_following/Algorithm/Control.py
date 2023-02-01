@@ -14,7 +14,7 @@ def control_correction(road_direction, model_direction): # 예측 값과 이미�
     
     return direction
 
-def strengthen_control(road_direction, bottom_value): # 차선에 너무 근접한 경우 방향 수정값 증가
+def strengthen_control(road_direction, road_gradient, bottom_value): # 차선에 너무 근접한 경우 방향 수정값 증가
     # right_threshold = (370, 450, 530) ## threshold 값을 4등분해서 각 구간에 들어가면 weight값에 따라 방향 보정
     # left_threshold = (100, 150, 250, )
     middle_lane_offset = 315
@@ -31,7 +31,7 @@ def strengthen_control(road_direction, bottom_value): # 차선에 너무 근접�
     print("left_idx : ", left_idx)
     print("right_idx : ", right_idx)
     if left_idx == None or right_idx == None:
-        if road_direction < 0:
+        if road_gradient < 0:
             direction = -7
         else:
             direction = 7
@@ -65,15 +65,15 @@ def strengthen_control(road_direction, bottom_value): # 차선에 너무 근접�
     
     return int(direction)
 
-def total_control(road_direction, model_direction, bottom_value):
-    road_direction = strengthen_control(road_direction, bottom_value)
+def total_control(road_direction, model_direction, bottom_value, road_gradient):
+    road_direction = strengthen_control(road_direction, road_gradient, bottom_value)
     final_direction = control_correction(road_direction, model_direction)
     print("model_direction : ",model_direction)
     print("final_direction:", final_direction)
     return road_direction
 
 def smooth_direction(bef1, bef2, bef3, cur):
-    average = bef3 * 0.1 + bef2 * 0.3 + bef1 * 0.3 + cur * 0.3
+    average = bef3 * 0.1 + bef2 * 0.2 + bef1 * 0.3 + cur * 0.4
     return round(average)
 
 def moving_log(log): # road change to inside
