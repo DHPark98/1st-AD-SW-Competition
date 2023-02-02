@@ -7,13 +7,18 @@ image_width = 640
 image_height = 480
 direction_div = 12
 
-def color_filter(image):
+def color_filter(image, driving_type):
     HSV_frame = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     H,S,V = cv2.split(HSV_frame)
     
+    
+    if driving_type == "Time":
+        H_green_lower = 35
+    elif driving_type == "Mission":
+        H_green_lower = 25
    
     # green
-    H_green_condition = (25<H) & (H<90)
+    H_green_condition = (H_green_lower<H) & (H<90)
     S_green_condition = (S>30)
     V_green_condition = V>100
     green_condition = H_green_condition & S_green_condition & V_green_condition
@@ -143,12 +148,12 @@ def hide_car_head(image):
     return car_hidden_img
 
 
-def total_function(image):
+def total_function(image, driving_type):
     image_blured = cv2.GaussianBlur(image, (0,0), 5)
     # image_blured = image
     if (0):
         image_blured = hide_car_head(image_blured)
-    image_filtered = color_filter(image_blured)
+    image_filtered = color_filter(image_blured, driving_type)
     image_no_black = remove_black(image_filtered)
     image_stadium = only_stadium(image_no_black)
     car_hidden = hide_car_head(image_stadium)
