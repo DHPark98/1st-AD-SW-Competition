@@ -17,6 +17,7 @@ from Algorithm.Control import *
 from Algorithm.img_preprocess import total_function
 from Algorithm.object_avoidance import avoidance
 from Devices.Lidar import LidarModule
+from Dataset.parking_constant import Parking_constant
 class DoWork:
     def __init__(self, play_name, front_cam_name, rear_cam_name, rf_weight_file = None, detect_weight_file = None):
         self.play_type = play_name
@@ -226,8 +227,10 @@ class DoWork:
         parking_speed = 50
         self.parking_speed = parking_speed
         distance_threshold = 250
+
+        constant = Parking_constant()
         
-        global detect_cnt, new_car_cnt, obj, car_detect_queue, queue_key, total_array, stop_cnt, left_right_cnt, cnt
+        
         parameter_initialize()
         
         while True:
