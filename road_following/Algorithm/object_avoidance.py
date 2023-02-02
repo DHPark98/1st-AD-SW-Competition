@@ -27,7 +27,7 @@ class avoidance():
                 pred = self.detect_network(image)
                 pred = non_max_suppression(pred)[0]
                 draw_img = show_bounding_box(draw_img, pred)
-                detect, _ = object_detection(pred)
+                detect, _, _ = object_detection(pred)
                 car_bbox = detect[3]
                 
                 bbox_center = box_center(car_bbox)
