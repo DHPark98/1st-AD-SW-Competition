@@ -179,7 +179,6 @@ class DoWork:
                     if order_flag == 0: # stop
                         self.direction = 0
                         self.speed = 0
-                        print("is stop?")
                         pass
                     elif order_flag == 1: # go
                         # self.direction = final_direction
@@ -193,6 +192,12 @@ class DoWork:
                                                         self.detect_weight_file, 50)
                         avoidance_processor.action(is_outside(preprocess_img))
 
+                    
+                    if abs(self.direction) >= 5:
+                        self.speed -= 10 * (abs(self.direction) - 4)
+                    if self.direction >=4 and self.direction <=6:
+                        self.direction +=1
+                        self.speed -= 10
                     message = 'a' + str(self.direction) +  's' + str(self.speed) + 'o' + str(outside)
                     self.serial.write(message.encode())
                     print()
