@@ -26,7 +26,7 @@ def color_filter(image, driving_type):
     S[green_condition] = 100
     V[green_condition] = 100
     # white
-    V_white_condition = V>200 # 165
+    V_white_condition = V>165 # 200
     white_condition = V_white_condition
     H[V_white_condition] = 0
     S[V_white_condition] = 0
@@ -171,8 +171,8 @@ def total_function(image, driving_type):
 
     return car_hidden 
 
-def cvt_binary(image):
-    transform_img = total_function(image)
+def cvt_binary(image, driving_type):
+    transform_img = total_function(image, driving_type)
     gray = cv2.cvtColor(transform_img, cv2.COLOR_BGR2GRAY)
     img_binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)[1]
     
