@@ -66,7 +66,7 @@ def stay_with_lidar(lidar_module, serial, speed, direction, rest_time = 1):
 
 def near_detect_car(lidar_module):
     scan = np.array(lidar_module.iter_scans())
-    near_detect_condition = lidar_condition(-100, 100, 500, scan)
+    near_detect_condition = lidar_condition(-100, 100, 400, scan)
     
     if len(np.where(near_detect_condition)[0]):
         return True

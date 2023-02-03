@@ -308,26 +308,40 @@ class DoWork:
                     self.parking_speed = -parking_speed
                     self.direction = 7
                     
+                    if near_detect_car(self.lidar_module):
+                        stay_with_lidar(self.lidar_module, self.serial, speed = 0, direction = 0)
+                        constant.initialize()
+                        self.parking_stage = 3
+                    
                     constant =escape_stage2(self.lidar_module, constant)
                     if constant.flag == True:
                         stay_with_lidar(self.lidar_module, self.serial, speed = 0, direction = 0)
                         constant.initialize()
-                        self.parking_stage = 3
-                        
-                elif self.parking_stage == 3: # 정밀 주차
+                        self.parking_stage = 4
+                
+                elif self.parking_stage == 3:
+                    self.parking_speed = parking_speed
+                    self.direction = 0
+
+                    constant = escape_stage1(self.lidar_module, constant)
+                    if constant.flag == True:
+                        stay_with_lidar(self.lidar_module, self.serial, speed = 0, direction = 7)
+                        constant.initialize()
+                        self.parking_stage = 2
+                      
+                elif self.parking_stage == 4: # 정밀 주차
                     self.parking_speed = 0
                     self.direction = 0
                     
                     if(False):
-                        stay_with_lidar(self.lidar_module, self.serial, speed = 0, direction = 7)
+                        stay_with_lidar(self.lidar_module, self.serial, speed = 0, direction = 7, rest_time=3)
                         constant.initialize()
-                        self.parking_stage = 4
+                        self.parking_stage = 5
                         pass
-                        
                     
                     pass
                 
-                elif self.parking_stage == 4: # 주차 탈출
+                elif self.parking_stage == 5: # 주차 탈출
                     self.parking_speed = parking_speed
                     self.direction = 7
                     
@@ -335,7 +349,7 @@ class DoWork:
                                     direction = self.direction, rest_time=5)
                     constant.initialize()
                     
-                    self.parking_stage = 5
+                    self.parking_stage = 6
                 
                 elif self.parking_stage == 5:
                     self.parking_speed = parking_speed
@@ -375,7 +389,7 @@ class DoWork:
                     
                 
 
-                message = 'a' + str(self.direction) +  's' + str(self.parking_speed) +'o0'
+                message = 'a' + str(self.direction) +  's' + str(self.parking_speed) +'o' + str(self.parking_stage)
                 # print(message)
                 self.serial.write(message.encode())
                 
