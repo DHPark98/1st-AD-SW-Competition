@@ -20,7 +20,7 @@ from Algorithm.ideal_parking import idealparking
 from Devices.Lidar import LidarModule
 from Dataset.parking_constant import Parking_constant
 class DoWork:
-    def __init__(self, play_name, front_cam_name, rear_cam_name, rf_weight_file = None, detect_weight_file = None, driving_type = None):
+    def __init__(self, play_name, front_cam_name, rear_cam_name, rf_weight_file = None, detect_weight_file = None, driving_type = None, parking_stage = None):
         self.play_type = play_name
         
         # Camera
@@ -56,6 +56,8 @@ class DoWork:
         
         # Driving type
         self.driving_type = driving_type
+
+        self.parking_stage = int(parking_stage)
 
     def serial_start(self):
         try:
@@ -254,11 +256,10 @@ class DoWork:
         """
         
         # parking_direction = 0
-        parking_speed = 0
+        parking_speed = 50
         self.parking_speed = parking_speed
-        distance_threshold = 200
-        parking_stage = 5
-        bef_stage = parking_stage-1
+        distance_threshold = 300
+        bef_stage = self.parking_stage-1
         
         constant = Parking_constant()
         print(constant.new_car_cnt)
@@ -273,10 +274,10 @@ class DoWork:
                     break
                     pass
                 front_cam_img, rear_cam_img = self.front_camera_module.read(), self.rear_camera_module.read() 
-                if bef_stage != parking_stage:
-                    print("Parking stage : {}".format(parking_stage))
-                print("Parking stage : ", parking_stage)
-                if parking_stage == -1: # Lidar Test
+                if bef_stage != self.parking_stage:
+                    print("Parking stage : {}".format(self.parking_stage))
+                print("Parking stage : ", self.parking_stage)
+                if self.parking_stage == -1: # Lidar Test
                     # 
                     self.parking_speed = 0
                     scan = np.array(self.lidar_module.iter_scans())
@@ -287,7 +288,7 @@ class DoWork:
                     pass
                 
                 
-                if parking_stage == 0: # Search parking start position
+                if self.parking_stage == 0: # Search parking start position
                     self.parking_speed = parking_speed
                     self.direction = 0 # 선 따라가도록 바꿀 예정
                     constant = detect_parking_car(self.lidar_module, constant)
@@ -296,40 +297,41 @@ class DoWork:
                     if constant.new_car_cnt == 2:
                         print("Detect two car!")
                         
-                        parking_stage = 1
+                        self.parking_stage = 1
                         constant.initialize()
 
                     
                     
                     
-                elif parking_stage == 1:
+                elif self.parking_stage == 1:
                     self.parking_speed = -1 * parking_speed
                     self.direction = 7
                     
                     if near_detect_car(self.lidar_module) == True:
                         constant.initialize()
-                        parking_stage = 2
+                        self.parking_stage = 2
                     pass
                 
-                elif parking_stage == 2:
-                    self.direction = -7
+                elif self.parking_stage == 2:
+                    self.direction = 0
                     self.parking_speed = parking_speed
                     if escape(self.lidar_module) == True:
                         
                         constant.initialize()
-                        parking_stage = 3
+                        self.parking_stage = 3
                 
-                elif parking_stage == 3:
+                elif self.parking_stage == 3:
                     self.direction, constant= steering_parking(self.lidar_module, constant)
                     
                     self.parking_speed = parking_speed * -1
-                    constant.queue_key = (constant.queue_key + 1) % 10
+                    
+                    constant.queue_key = (constant.queue_key + 1) % 5
                     if near_detect_car(self.lidar_module) == True:
                         constant.initialize()
-                        parking_stage = 2
+                        self.parking_stage = 4
 
-                    flag, constant = search_left_right(self.lidar_module, constant)
-                    if flag == True:
+                    constant = search_left_right(self.lidar_module, constant)
+                    if constant.flag == True:
                         print("Search_left_right")
 
                         # calculate distance
@@ -340,36 +342,35 @@ class DoWork:
 
                         if(abs(left_dist - right_dist) > distance_threshold):
                             constant.initialize()
-                            parking_stage = 4
+                            self.parking_stage = 4
                         else:
-                            parking_stage = 5
+                            self.parking_stage = 5
                             constant.initialize()
 
-                elif parking_stage == 4:
+                elif self.parking_stage == 4:
                     self.direction = 0
                     self.parking_speed = parking_speed
                     
                     if escape(self.lidar_module) == True:
                         constant.initialize()
-                        parking_stage = 3     
+                        self.parking_stage = 3     
 
-                elif parking_stage == 5:
+                elif self.parking_stage == 5:
                     self.parking_speed = -1 * parking_speed
                     self.direction, constant = detailed_parking(self.lidar_module, constant)
-                    print("yes")
-                    constant.queue_key = (constant.queue_key + 1) % 10
+                    constant.queue_key = (constant.queue_key + 1) % 5
                     
-                    flag, constant = stop(self.lidar_module, constant)
-                    if flag == True:
+                    constant = stop(self.lidar_module, constant)
+                    if constant.flag == False or constant.stop == True:
                         constant.initialize()
                         
                         # reboot
                         self.lidar_module.lidar_finish()
-                        rest(self.serial, 3)
+                        rest(self.serial, 10)
                         self.lidar_start()
-                        parking_stage = 6
+                        self.parking_stage = 6
                         
-                elif parking_stage == 6:
+                elif self.parking_stage == 6:
                     self.direction, constant = steering_parking(self.lidar_module, constant)
                     
                     self.parking_speed = parking_speed
@@ -377,28 +378,28 @@ class DoWork:
                     
                     if escape(self.lidar_module) == True:
                         constant.initialize()
-                        parking_stage = 7
+                        self.parking_stage = 7
                     
                         
-                elif parking_stage == 7:
+                elif self.parking_stage == 7:
                     self.direction  = -7
                     self.parking_speed = -1 * parking_speed
                     
                     if near_detect_car(self.lidar_module) == True:
                         constant.initialize()
-                        parking_stage = 8
+                        self.parking_stage = 8
                 
-                elif parking_stage == 8:
+                elif self.parking_stage == 8:
                     self.direction = 7
                     self.parking_speed = parking_speed
                     
-                    flag, constant = escape_parking3(self.lidar_module, constant)
-                    if escape(self.lidar_module) == True or flag == True:
+                    constant = escape_parking3(self.lidar_module, constant)
+                    if escape(self.lidar_module) == True or constant.flag == True:
                         constant.initialize()
                         
-                        parking_stage = 9
+                        self.parking_stage = 9
                     
-                elif parking_stage == 9:
+                elif self.parking_stage == 9:
                     self.direction = -7
                     self.parking_speed = -1 * parking_speed
                     
@@ -407,7 +408,7 @@ class DoWork:
                     if constant.new_car_cnt == 1:
                         print("Detect car!")
                         constant.initialize()
-                        parking_stage = 10
+                        self.parking_stage = 10
                 
                 
                 
@@ -416,19 +417,19 @@ class DoWork:
                     
                     
 
-                # elif parking_stage == 6:
+                # elif self.parking_stage == 6:
                 #     self.direction = 0
                 #     self.parking_speed = parking_speed
                 #     is_end, cnt = escape_parking(self.lidar_module, cnt)
 
                 #     if is_end == True:
-                #         parking_stage = 7
+                #         self.parking_stage = 7
                     
                     
                     
                     
                 
-                # elif parking_stage == 7:
+                # elif self.parking_stage == 7:
                 #     self.direction = 7
                 #     self.parking_speed = parking_speed
                 #     detect_cnt = 5
@@ -442,27 +443,27 @@ class DoWork:
                 #         detect_cnt = 0
                 #         obj = False
                 #         cnt = 0
-                #         parking_stage = 8
+                #         self.parking_stage = 8
 
 
-                # elif parking_stage == 8:
+                # elif self.parking_stage == 8:
                 #     self.direction = -7
                 #     self.parking_speed = -1 * parking_speed
                 #     rf_condition, car_detect_queue= escape_parking3(self.lidar_module,
                 #      car_detect_queue)
                 #     if near_detect_car(self.lidar_module) == True:
-                #         parking_stage = 7
+                #         self.parking_stage = 7
 
                 #     if rf_condition == True:
                         
-                #         parking_stage = 10
+                #         self.parking_stage = 10
                     
                 
                     
 
                 
                 
-                elif parking_stage == 10: # road_following
+                elif self.parking_stage == 10: # road_following
                     self.direction = 0
                     self.parking_speed = 0
                     bev = bird_convert(front_cam_img, 'FRONT')
@@ -476,11 +477,7 @@ class DoWork:
                     # cv2.imshow("video_binary_f", binary_img)
 
                 
-                    
-                
-                
-                self.direction = 0
-                self.parking_speed = 0
+
                 message = 'a' + str(self.direction) +  's' + str(self.parking_speed) +'o0'
                 # print(message)
                 self.serial.write(message.encode())
@@ -491,7 +488,7 @@ class DoWork:
                 cv2.imshow("video_original_f", front_cam_img)
                 cv2.imshow("video_original_r", rear_cam_img)
                 
-                bef_stage = parking_stage
+                bef_stage = self.parking_stage
                 
                 
             except Exception as e:
