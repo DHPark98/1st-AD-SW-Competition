@@ -21,33 +21,48 @@ def detect_parking_car(lidar_module, c):
         print(c.detect_cnt)
         if c.flag == True:
             print("Detect!")
+            if c.obj == False:
+                c.new_car_cnt += 1
             c.obj = True
         else:
             print("not detect!")
-            if c.obj == True:
-                c.new_car_cnt += 1
             c.obj = False
 
         return c
-            
-        
-        
-        
-        
         
     except Exception as e:
         _, _, tb = sys.exc_info()
         print("car detect error = {}, error line = {}".format(e, tb.tb_lineno))
-        
-# def left_or_right(lidar_module, c):
-#     scan = np.array(lidar_module.iter_scans())
-#     car_left_condition = lidar_condition(90, 100, 2000, scan)
-#     car_right_condition = lidar_condition(-100, -90, 2000, scan)
-    
-#     c.left_cnt += len(scan[np.where(car_left_condition)])
-#     c.right_cnt += len(scan[np.where(car_right_condition)])
 
-#     return c
+def escape_stage1(lidar_module, c):
+    scan = np.array(lidar_module.iter_scans())
+    near_detect_condition = lidar_condition(-100, 100, 1200, scan)
+    
+    detect_counting(near_detect_condition, c)
+    
+    if len(np.where(near_detect_condition)[0]) == 0:
+        return True
+    else:
+        return False
+    
+def escape_stage2(lidar_module, c):
+    scan = np.array(lidar_module.iter_scans())
+    left_detect_condition = lidar_condition(80, 100, 1000, scan)
+    right_detect_condition = lidar_condition(-100, -80, 1000, scan)
+    
+    detect_counting2(left_detect_condition, right_detect_condition, c)
+    
+    return c
+    
+def stay_with_lidar(lidar_module, serial, speed, direction, rest_time = 1):
+    start_time = time.time()
+    end_time = time.time()
+    while(end_time - start_time >= rest_time):
+        scan = np.array(lidar_module.iter_scans())
+        message = "a" + str(direction) + "s" + str(speed) + "o0"
+        serial.write(message.encode())
+        end_time = time.time()
+    
 
 def near_detect_car(lidar_module):
     scan = np.array(lidar_module.iter_scans())

@@ -15,6 +15,7 @@ class Parking_constant():
         self.obj = 0
         self.queue_key = 0
         self.total_array = np.array([[-1, -1, -1]])
+        self.flag = True
         self.stop = False
         
     def initialize(self):
@@ -25,4 +26,5 @@ class Parking_constant():
         self.obj = 0
         self.queue_key = 0
         self.total_array = np.array([[-1, -1, -1]])
+        self.flag = True
         self.stop = False

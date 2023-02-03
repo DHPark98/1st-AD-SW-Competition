@@ -171,7 +171,7 @@ def total_function(image, driving_type):
 
     return car_hidden 
 
-def cvt_binary(image, driving_type):
+def cvt_binary(image, driving_type = "Time"):
     transform_img = total_function(image, driving_type)
     gray = cv2.cvtColor(transform_img, cv2.COLOR_BGR2GRAY)
     img_binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)[1]
