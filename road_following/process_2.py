@@ -20,7 +20,8 @@ from Algorithm.ideal_parking import idealparking
 from Devices.Lidar import LidarModule
 from Dataset.parking_constant import Parking_constant
 class DoWork:
-    def __init__(self, play_name, front_cam_name, rear_cam_name, rf_weight_file = None, detect_weight_file = None, driving_type = None, parking_stage = None):
+    def __init__(self, play_name, front_cam_name, rear_cam_name, rf_weight_file = None, detect_weight_file = None,
+                  driving_type = None, parking_stage = None, parking_speed_value = None):
         self.play_type = play_name
         
         # Camera
@@ -47,7 +48,7 @@ class DoWork:
         self.speed = 0
         self.speed_value = self.speed
 
-        self.parking_speed = 50
+        
         self.direction = 0
         
         # Lidar
@@ -56,8 +57,9 @@ class DoWork:
         
         # Driving type
         self.driving_type = driving_type
-
-        self.parking_stage = int(parking_stage)
+        if play_name == "Parking":
+            self.parking_stage = int(parking_stage)
+            self.parking_speed_value = parking_speed_value
 
     def serial_start(self):
         try:
@@ -256,7 +258,7 @@ class DoWork:
         """
         
         # parking_direction = 0
-        parking_speed = 50
+        parking_speed = self.parking_speed_value
         self.parking_speed = parking_speed
         distance_threshold = 300
         bef_stage = self.parking_stage-1
@@ -265,7 +267,7 @@ class DoWork:
         print(constant.new_car_cnt)
         while True:
             try:
-                if self.front_camera_module == None or self.rear_camera_module == None:
+                if self.front_camera_module == None:
                     print("Please Check Camera module")
                     break
                     pass
@@ -273,7 +275,7 @@ class DoWork:
                     print("Please Check Lidar module")
                     break
                     pass
-                front_cam_img, rear_cam_img = self.front_camera_module.read(), self.rear_camera_module.read() 
+                front_cam_img = self.front_camera_module.read()
                 if bef_stage != self.parking_stage:
                     print("Parking stage : {}".format(self.parking_stage))
                 print("Parking stage : ", self.parking_stage)
@@ -281,8 +283,10 @@ class DoWork:
                     # 
                     self.parking_speed = 0
                     scan = np.array(self.lidar_module.iter_scans())
+                    condition = lidar_condition(-100, 100, 2000, scan)
+                    print(scan[np.where(condition)])
                     # scan = scan[lidar_condition(-180, 180, 2000, scan)]
-                    print(scan)
+
                     
 
                     pass
@@ -296,7 +300,7 @@ class DoWork:
                     print("New car cnt : ",constant.new_car_cnt)
                     if constant.new_car_cnt == 2:
                         print("Detect two car!")
-                        
+                        stay_with_lidar(self.lidar_module, self.serial, speed = 0, direction = 7)
                         self.parking_stage = 1
                         constant.initialize()
 
@@ -308,6 +312,7 @@ class DoWork:
                     self.direction = 7
                     
                     if near_detect_car(self.lidar_module) == True:
+                        stay_with_lidar(self.lidar_module, self.serial, speed = 0, direction = 0)
                         constant.initialize()
                         self.parking_stage = 2
                     pass
@@ -316,7 +321,7 @@ class DoWork:
                     self.direction = 0
                     self.parking_speed = parking_speed
                     if escape(self.lidar_module) == True:
-                        
+                        stay_with_lidar(self.lidar_module, self.serial, speed = 0, direction = 0)
                         constant.initialize()
                         self.parking_stage = 3
                 
@@ -325,10 +330,11 @@ class DoWork:
                     
                     self.parking_speed = parking_speed * -1
                     
-                    constant.queue_key = (constant.queue_key + 1) % 5
+                    constant.queue_key = (constant.queue_key + 1) % 10
                     if near_detect_car(self.lidar_module) == True:
+                        stay_with_lidar(self.lidar_module, self.serial, speed = 0, direction = 0)
                         constant.initialize()
-                        self.parking_stage = 4
+                        self.parking_stage = 2
 
                     constant = search_left_right(self.lidar_module, constant)
                     if constant.flag == True:
@@ -342,33 +348,50 @@ class DoWork:
 
                         if(abs(left_dist - right_dist) > distance_threshold):
                             constant.initialize()
-                            self.parking_stage = 4
+                            stay_with_lidar(self.lidar_module, self.serial, speed = 0, direction = 0)
+                            self.parking_stage = 2
                         else:
+                            stay_with_lidar(self.lidar_module, self.serial, speed = 0, direction = 0)
                             self.parking_stage = 5
+                            
                             constant.initialize()
+                            constant.detect_cnt = 3
 
-                elif self.parking_stage == 4:
-                    self.direction = 0
-                    self.parking_speed = parking_speed
+                # elif self.parking_stage == 4:
+                #     self.direction = 0
+                #     self.parking_speed = parking_speed
                     
-                    if escape(self.lidar_module) == True:
-                        constant.initialize()
-                        self.parking_stage = 3     
+                #     if escape(self.lidar_module) == True:
+                #         constant.initialize()
+                #         self.parking_stage = 3    
+                         
 
                 elif self.parking_stage == 5:
                     self.parking_speed = -1 * parking_speed
-                    self.direction, constant = detailed_parking(self.lidar_module, constant)
-                    constant.queue_key = (constant.queue_key + 1) % 5
+                    # self.direction, constant = detailed_parking(self.lidar_module, constant)
+                    # constant.queue_key = (constant.queue_key + 1) % 5
                     
-                    constant = stop(self.lidar_module, constant)
-                    if constant.flag == False or constant.stop == True:
-                        constant.initialize()
+                    # constant = stop(self.lidar_module, constant)
+                    # if constant.flag == False or constant.stop == True:
+                    #     constant.initialize()
                         
-                        # reboot
-                        self.lidar_module.lidar_finish()
-                        rest(self.serial, 10)
-                        self.lidar_start()
+                    #     # reboot
+                    #     self.lidar_module.lidar_finish()
+                    #     rest(self.serial, 10)
+                    #     self.lidar_start()
+                    #     self.parking_stage = 6
+
+                    self.direction = 0
+                    constant = stop(self.lidar_module, constant)
+                    print("Stop_cnt : ",constant.detect_cnt)
+                    if constant.flag == False:
+                        constant.initialize()
+                        stay_with_lidar(self.lidar_module, self.serial, speed = 0, direction = 0, rest_time=10)
                         self.parking_stage = 6
+                    
+                    
+
+                    
                         
                 elif self.parking_stage == 6:
                     self.direction, constant = steering_parking(self.lidar_module, constant)
@@ -486,16 +509,14 @@ class DoWork:
                     
                 
                 cv2.imshow("video_original_f", front_cam_img)
-                cv2.imshow("video_original_r", rear_cam_img)
                 
                 bef_stage = self.parking_stage
                 
                 
             except Exception as e:
-                if self.front_camera_module and self.rear_camera_module:
+                if self.front_camera_module:
                     print("Exception occur")
                     self.front_camera_module.close_cam()
-                    self.rear_camera_module.close_cam()
                     cv2.destroyAllWindows()
                 if self.lidar_module:
                     self.lidar_module.lidar_finish()
@@ -508,10 +529,9 @@ class DoWork:
                 pass
             
             except KeyboardInterrupt:
-                if self.front_camera_module and self.rear_camera_module:
+                if self.front_camera_module:
                     print("Keyboard Interrupt occur")
                     self.front_camera_module.close_cam()
-                    self.rear_camera_module.close_cam()
                     cv2.destroyAllWindows()
                 if self.lidar_module:
                     self.lidar_module.lidar_finish()
@@ -523,8 +543,7 @@ class DoWork:
                 pass
             
             if cv2.waitKey(25) == ord('f') :
-                if self.front_camera_module and self.rear_camera_module:
-                    self.rear_camera_module.close_cam()
+                if self.front_camera_module:
                     self.front_camera_module.close_cam()
                     cv2.destroyAllWindows()
                 if self.lidar_module:

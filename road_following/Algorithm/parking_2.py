@@ -15,7 +15,7 @@ def detect_parking_car(lidar_module, c):
     try:
         scan = np.array(lidar_module.iter_scans())
         # print(scan)
-        car_search_condition = lidar_condition(-110, -100, 1500, scan)
+        car_search_condition = lidar_condition(-110, -100, 2000, scan)
         print(scan[car_search_condition])
         c = detect_counting(car_search_condition, c)
         print(c.detect_cnt)
@@ -36,14 +36,11 @@ def detect_parking_car(lidar_module, c):
 
 def escape_stage1(lidar_module, c):
     scan = np.array(lidar_module.iter_scans())
-    near_detect_condition = lidar_condition(-100, 100, 1200, scan)
+    near_detect_condition = lidar_condition(-110, 0, 1200, scan)
     
     detect_counting(near_detect_condition, c)
     
-    if len(np.where(near_detect_condition)[0]) == 0:
-        return True
-    else:
-        return False
+    return c
     
 def escape_stage2(lidar_module, c):
     scan = np.array(lidar_module.iter_scans())
@@ -57,16 +54,16 @@ def escape_stage2(lidar_module, c):
 def stay_with_lidar(lidar_module, serial, speed, direction, rest_time = 1):
     start_time = time.time()
     end_time = time.time()
-    while(end_time - start_time >= rest_time):
+    while(end_time - start_time < rest_time):
+        
         scan = np.array(lidar_module.iter_scans())
         message = "a" + str(direction) + "s" + str(speed) + "o0"
         serial.write(message.encode())
-        end_time = time.time()
-    
+        end_time = time.time()   
 
 def near_detect_car(lidar_module):
     scan = np.array(lidar_module.iter_scans())
-    near_detect_condition = lidar_condition(-100, 100, 400, scan)
+    near_detect_condition = lidar_condition(-100, 100, 450, scan)
     
     if len(np.where(near_detect_condition)[0]):
         return True
@@ -86,10 +83,10 @@ def steering_parking(lidar_module, c):
     scan = np.array(lidar_module.iter_scans())
     detect_condition = lidar_condition(-100, 100, 3000, scan)
     detect_scan = scan[np.where(detect_condition)]
-    print(detect_scan)
     steering_angle, distance_bias, c = parking_steering_angle(detect_scan, c)
     # print(steering_angle)
-    direction = return_parking_direction(-1 * steering_angle) + int(distance_bias * 4/700)
+    f = lambda x : x**2 * (7/(1500)**2) if x>0 else -1 * x**2 * (7/(1500)**2)
+    direction = return_parking_direction(-1 * steering_angle) + int(f(distance_bias))
     
     return direction, c
 
@@ -124,27 +121,35 @@ def parking_steering_angle(scan, c, mode = 'angle'):
 
         # except Exception as e:
         #     return 0, c
+            
             theta = c.total_array[:,1]
-            theta = np.sort(theta)
+            theta_idx = np.argsort(theta)
+            c.total_array = c.total_array[theta_idx]
             
-            theta_1 = np.zeros(theta.shape)
-            theta_1[:len(theta)-1] = theta[1:]
-            theta_1[len(theta)-1] = theta[0]
-            delta_theta = np.abs((theta - theta_1)[1:len(theta)-1]) # delta theta가 너무 작은 경우 threshold로 걸러내는 작업 필요
+            # theta_1 = np.zeros(theta.shape)
+            # theta_1[:len(theta)-1] = theta[1:]
+            # theta_1[len(theta)-1] = theta[0]
+            # delta_theta = np.abs((theta - theta_1)[1:len(theta)-1]) # delta theta가 너무 작은 경우 threshold로 걸러내는 작업 필요
+            next_tot = np.zeros(c.total_array.shape)
+            next_tot[:len(theta)-1] = c.total_array[1:]
+            next_tot[len(theta)-1] = c.total_array[0]
+            delta_tot = np.abs((c.total_array - next_tot)[1:len(c.total_array) - 1])
+            delta_angle = delta_tot[:,1]
+            
 
-            ret_idx = np.argmax(delta_theta)
+            ret_idx = np.argmax(delta_angle)
             
-            if delta_theta[ret_idx] < delta_threshold:
+            if delta_angle[ret_idx] < delta_threshold:
                 pass
             
-            if len(delta_theta) < 3:
+            if len(delta_angle) < 3:
                 print("Delta error")
                 return 0, c
             # return
-            print("steering angle : {}".format((theta[ret_idx+1] + theta[ret_idx+2])/2))
+            print("steering angle : {}".format((c.total_array[ret_idx+1, 1] + c.total_array[ret_idx+2, 1])/2))
             distance_bias = c.total_array[ret_idx+1, 2] - c.total_array[ret_idx+2, 2]
             print("distance_bias : ", distance_bias)
-            return (theta[ret_idx+1] + theta[ret_idx+2])/2, distance_bias,  c
+            return (c.total_array[ret_idx+1, 1] + c.total_array[ret_idx+2, 1])/2, distance_bias,  c
         except Exception as e:
             _, _, tb = sys.exc_info()
             print("parking steering angle error = {}, error line = {}".format(e, tb.tb_lineno))
@@ -245,7 +250,7 @@ def detailed_parking(lidar_module, c):
 def stop(lidar_module, c):
     scan = np.array(lidar_module.iter_scans())
     
-    stop_condition = lidar_condition2(-90, -80, 80, 90, 1000, scan)
+    stop_condition = lidar_condition2(-80, -70, 70, 80, 1000, scan)
     
     return detect_counting(stop_condition, c)
 

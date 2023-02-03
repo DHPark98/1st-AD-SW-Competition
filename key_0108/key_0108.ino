@@ -1,10 +1,10 @@
 const int PWM = 8;
-const int STEERING_1 = 6;
-const int STEERING_2 = 7;
+const int STEERING_1 = 10;
+const int STEERING_2 = 12;
 const int FOWARD_RIGHT_1 = 2;
-const int FOWARD_RIGHT_2 = 3;
-const int FOWARD_LEFT_1 = 4;
-const int FOWARD_LEFT_2 = 5;
+const int FOWARD_RIGHT_2 = 4;
+const int FOWARD_LEFT_1 = 6;
+const int FOWARD_LEFT_2 = 8;
 const int POT = A4;
 const int front_echo = 46;
 const int front_trig = 47;
@@ -188,6 +188,7 @@ void loop() {
     
   }
   else{
+    foward(0);
        Serial.print(" Read/Map [A1]/[b]: ");  
     Serial.print(resistance);
     Serial.print(" / ");

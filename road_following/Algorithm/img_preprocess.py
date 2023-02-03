@@ -32,7 +32,7 @@ def color_filter(image, driving_type):
     S[V_white_condition] = 0
     V[V_white_condition] = 255
     # gray
-    V_gray_condition = (115<V) & (V<=200)#165)
+    V_gray_condition = (115<V) & (V<=165)#200)
     # S_gray_condition = S<25
     gray_condition = V_gray_condition #& S_gray_condition
     H[gray_condition] = 120

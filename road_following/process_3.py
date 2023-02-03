@@ -41,9 +41,9 @@ class DoWork:
         self.serial = serial.Serial()
         self.serial.port = '/dev/ttyUSB0'       ### 아두이노 메가
         self.serial.baudrate = 9600
-        
+    
         # Control
-        self.speed = 0
+        self.speed = 30
         self.speed_value = self.speed
 
         self.parking_speed = 50
@@ -57,7 +57,8 @@ class DoWork:
         self.driving_type = driving_type
 
         # Parking
-        self.parking_stage = int(parking_stage)
+        if play_name == "Parking":
+            self.parking_stage = int(parking_stage)
 
     def serial_start(self):
         try:
@@ -265,7 +266,7 @@ class DoWork:
         print(constant.new_car_cnt)
         while True:
             try:
-                if self.front_camera_module == None or self.rear_camera_module == None:
+                if self.front_camera_module == None:
                     print("Please Check Camera module")
                     break
                     pass
@@ -273,11 +274,16 @@ class DoWork:
                     print("Please Check Lidar module")
                     break
                     pass
-                front_cam_img, rear_cam_img = self.front_camera_module.read(), self.rear_camera_module.read() 
+                front_cam_img = self.front_camera_module.read()
                 if bef_stage != self.parking_stage:
                     print("Parking stage : {}".format(self.parking_stage))
                 print("Parking stage : ", self.parking_stage)
                 draw_img =front_cam_img.copy()
+
+                if self.parking_stage == -1:
+                    self.parking_speed = 0
+                    scan = np.array(self.lidar_module.iter_scans())
+                    print(scan)
                 
                 if self.parking_stage == 0: # Search parking start position
                     self.parking_speed = parking_speed
@@ -299,14 +305,14 @@ class DoWork:
                     self.direction = -7
                     
                     constant = escape_stage1(self.lidar_module, constant)
-                    if constant.flag == True:
-                        stay_with_lidar(self.lidar_module, self.serial, speed = 0, direction = 7)
+                    if constant.flag == False:
+                        stay_with_lidar(self.lidar_module, self.serial, speed = 0, direction = 3)
                         constant.initialize()
                         self.parking_stage = 2
                 
                 elif self.parking_stage == 2: # 주차공간 진입
                     self.parking_speed = -parking_speed
-                    self.direction = 7
+                    self.direction = 3
                     
                     if near_detect_car(self.lidar_module):
                         stay_with_lidar(self.lidar_module, self.serial, speed = 0, direction = 0)
@@ -397,16 +403,15 @@ class DoWork:
                     
                 
                 cv2.imshow("video_original_f", draw_img)
-                cv2.imshow("video_original_r", rear_cam_img)
+                
                 
                 bef_stage = self.parking_stage
                 
                 
             except Exception as e:
-                if self.front_camera_module and self.rear_camera_module:
+                if self.front_camera_module:
                     print("Exception occur")
                     self.front_camera_module.close_cam()
-                    self.rear_camera_module.close_cam()
                     cv2.destroyAllWindows()
                 if self.lidar_module:
                     self.lidar_module.lidar_finish()
@@ -419,10 +424,9 @@ class DoWork:
                 pass
             
             except KeyboardInterrupt:
-                if self.front_camera_module and self.rear_camera_module:
+                if self.front_camera_module:
                     print("Keyboard Interrupt occur")
                     self.front_camera_module.close_cam()
-                    self.rear_camera_module.close_cam()
                     cv2.destroyAllWindows()
                 if self.lidar_module:
                     self.lidar_module.lidar_finish()
@@ -434,8 +438,7 @@ class DoWork:
                 pass
             
             if cv2.waitKey(25) == ord('f') :
-                if self.front_camera_module and self.rear_camera_module:
-                    self.rear_camera_module.close_cam()
+                if self.front_camera_module:
                     self.front_camera_module.close_cam()
                     cv2.destroyAllWindows()
                 if self.lidar_module:
