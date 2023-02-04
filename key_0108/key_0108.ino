@@ -189,6 +189,19 @@ void loop() {
   }
   else{
     foward(0);
+    resistance = analogRead(POT);
+    mapped_resistance = map(resistance, 872, 757, -7, 7);
+    angle = 0;
+
+        if (mapped_resistance == angle){
+      stay();
+    }
+    else if (mapped_resistance > angle){
+      left();
+    }
+    else if (mapped_resistance < angle){
+      right();
+    }
        Serial.print(" Read/Map [A1]/[b]: ");  
     Serial.print(resistance);
     Serial.print(" / ");

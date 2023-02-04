@@ -15,7 +15,7 @@ def detect_parking_car(lidar_module, c):
     try:
         scan = np.array(lidar_module.iter_scans())
         # print(scan)
-        car_search_condition = lidar_condition(-110, -100, 2000, scan)
+        car_search_condition = lidar_condition(-90, -80, 2500, scan)
         print(scan[car_search_condition])
         c = detect_counting(car_search_condition, c)
         print(c.detect_cnt)
@@ -63,7 +63,7 @@ def stay_with_lidar(lidar_module, serial, speed, direction, rest_time = 1):
 
 def near_detect_car(lidar_module):
     scan = np.array(lidar_module.iter_scans())
-    near_detect_condition = lidar_condition(-100, 100, 450, scan)
+    near_detect_condition = lidar_condition(-100, 100, 625, scan)
     
     if len(np.where(near_detect_condition)[0]):
         return True
@@ -85,9 +85,14 @@ def steering_parking(lidar_module, c):
     detect_scan = scan[np.where(detect_condition)]
     steering_angle, distance_bias, c = parking_steering_angle(detect_scan, c)
     # print(steering_angle)
-    f = lambda x : x**2 * (7/(1500)**2) if x>0 else -1 * x**2 * (7/(1500)**2)
+    f = lambda x : x**2 * (7/(600)**2) if x>0 else -1 * x**2 * (7/(600)**2)
     direction = return_parking_direction(-1 * steering_angle) + int(f(distance_bias))
+    print("direction by gradient : ", return_parking_direction(-1 * steering_angle))
+    print("direction by distance : ", int(f(distance_bias)))
     
+    direction = 7 if direction >= 7 else direction
+    direction = -7 if direction <= -7 else direction
+    print(direction)
     return direction, c
 
 def rest(serial, sleep_time):
@@ -146,6 +151,7 @@ def parking_steering_angle(scan, c, mode = 'angle'):
                 print("Delta error")
                 return 0, c
             # return
+            print(c.total_array)
             print("steering angle : {}".format((c.total_array[ret_idx+1, 1] + c.total_array[ret_idx+2, 1])/2))
             distance_bias = c.total_array[ret_idx+1, 2] - c.total_array[ret_idx+2, 2]
             print("distance_bias : ", distance_bias)
@@ -192,8 +198,8 @@ def calculate_distance(lidar_module):
         for i in range(5):
             scan = np.array(lidar_module.iter_scans())
 
-            right_condition = lidar_condition(-100, -70, 1000, scan)
-            left_condition = lidar_condition(70, 100, 1000, scan)
+            right_condition = lidar_condition(-100, -70, 1500, scan)
+            left_condition = lidar_condition(70, 100, 1500, scan)
 
             left_scan = scan[np.where(left_condition)]
             right_scan = scan[np.where(right_condition)]
@@ -203,10 +209,7 @@ def calculate_distance(lidar_module):
                 total_right_scan = right_scan
             else:
                 total_left_scan = np.concatenate((total_left_scan, left_scan), axis = 0)
-                total_right_scan = np.concatenate((total_right_scan, right_scan), axis = 0)
-                
-        print("total left scan : ", total_left_scan)
-        print("total right scan : ", total_right_scan)     
+                total_right_scan = np.concatenate((total_right_scan, right_scan), axis = 0)   
         left_distance = np.min(total_left_scan[:,1])
         right_distance = np.min(total_right_scan[:,1])
 
@@ -256,18 +259,24 @@ def stop(lidar_module, c):
 
 def search_left_right(lidar_module, c):
     scan = np.array(lidar_module.iter_scans())
-    left_condition = lidar_condition(-100, -80, 1000, scan)
-    right_condition = lidar_condition(80, 100, 1000, scan)
+    left_condition = lidar_condition(-100, -90, 1000, scan)
+    right_condition = lidar_condition(90, 100, 1000, scan)
     
     return detect_counting2(left_condition, right_condition, c)
     
     
 def escape_parking(lidar_module, c):
     scan = np.array(lidar_module.iter_scans())
-    left_condition = lidar_condition(-80, -70, 1000, scan)
-    right_condition = lidar_condition(70, 80, 1000, scan)
+    right_condition = lidar_condition(-65, -55, 2000, scan)
+    left_condition = lidar_condition(55, 65, 2000, scan)
 
-    return detect_counting(condition1=left_condition, c = c, condition2=right_condition)
+    left_scan = scan[np.where(left_condition)]
+    right_scan = scan[np.where(right_condition)]
+
+    print(left_scan, right_scan)
+    
+
+    return detect_counting2(left_condition, right_condition, c)
 
 def escape_parking2(lidar_module, c):
     scan = np.array(lidar_module.iter_scans())

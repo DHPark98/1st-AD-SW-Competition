@@ -263,7 +263,7 @@ def object_detection(pred): # pred 중 class별로 가장 큰 bbox return
         order_flag = 2
     else:
         order_flag = 1
-    if (pred_array[0] != None) and (y2_crosswalk > 430):
+    if (pred_array[0] != None) and (y2_crosswalk > 350):
         is_crosswalk = True
     else:
         is_crosswalk = False
@@ -453,8 +453,8 @@ def total_process(image, mode = "FRONT"):
 def box_control(box, mode = 'traffic'):
     if mode == 'traffic':
         bottom_x = box[2].item()
-        
-        base_bottom_x = 320
+    
+        base_bottom_x = 290
         direction_bias = (bottom_x - base_bottom_x) * 7/160
         print("direction bias :", direction_bias)
         

@@ -17,7 +17,7 @@ def control_correction(road_direction, model_direction): # 예측 값과 이미�
 def strengthen_control(road_direction, road_gradient, bottom_value): # 차선에 너무 근접한 경우 방향 수정값 증가
     # right_threshold = (370, 450, 530) ## threshold 값을 4등분해서 각 구간에 들어가면 weight값에 따라 방향 보정
     # left_threshold = (100, 150, 250, )
-    middle_lane_offset = 295
+    middle_lane_offset = 280
     middle_threshold = (-60, -30, -10, -5, +5, +10, +30, +60)
     middle_threshold = np.array(middle_threshold)
     middle_threshold += middle_lane_offset
