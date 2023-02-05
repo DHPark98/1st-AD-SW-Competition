@@ -48,7 +48,7 @@ class avoidance():
                 message = "a" + str(direction) + "s" + str(self.speed) + "o0"
                 self.serial.write(message.encode())
                 
-                cv2.imshow('VideoCombined_detect', draw_img)
+                # cv2.imshow('VideoCombined_detect', draw_img)
             
             return True
             pass

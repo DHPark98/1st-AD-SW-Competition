@@ -73,8 +73,8 @@ def return_augmented_images(image, style):
         return np.array(augmented_image)
     
     
-def roi_cutting(image):
-    image = image[200:]
+def roi_cutting(image, cutting_idx = 200):
+    image = image[cutting_idx:]
     return image
     # x = np.linspace(0,639,640)
     # y = np.linspace(0,479,480)
@@ -196,9 +196,9 @@ def distinguish_traffic_light(image, pred):
                 cls = 1
             
             
-            cv2.imshow("obj_image", obj_img)
-            cv2.imshow("obj_green_filtered", frame_green_filtered)
-            cv2.imshow("obj_red_filtered", frame_red_filtered)
+            # cv2.imshow("obj_image", obj_img)
+            # cv2.imshow("obj_green_filtered", frame_green_filtered)
+            # cv2.imshow("obj_red_filtered", frame_red_filtered)
             
         new_pred = np.concatenate((new_pred, np.array([[p1[0], p1[1], p2[0], p2[1], cf, cls]])), axis = 0)
             
@@ -252,10 +252,6 @@ def object_detection(pred): # pred 중 class별로 가장 큰 bbox return
         elif (cls == 3 and center_inside(box_center(box)) and
                 box_area(box) > bbox_threshold[cls]): # find object(car)
             pred_array[cls] = box
-    print("p0: ",pred_array[0],)
-    print("p1: ",pred_array[1])
-    print("p2: ",pred_array[2])
-    print("p3: ",pred_array[3])
     if (pred_array[0] != None) and (pred_array[2] != None) and (y2_crosswalk > 430):    #and y2_crosswalk > 300
         order_flag = 0
         print("over 430")
@@ -267,7 +263,7 @@ def object_detection(pred): # pred 중 class별로 가장 큰 bbox return
         is_crosswalk = True
     else:
         is_crosswalk = False
-    print("order flag: ", order_flag)
+    # print("order flag: ", order_flag)
     return pred_array, order_flag, is_crosswalk
 
             
@@ -361,8 +357,8 @@ def dominant_gradient(image): # 흑백 이미지에서 gradient 값, 차선 하�
 
 
 def return_road_direction(road_gradient):
-    f = lambda x : 7/64000*x**3
-    ret_direction = int(f(road_gradient))
+    f = lambda x : 7/64000*(x**3)
+    ret_direction = round(f(road_gradient))
     
     ret_direction = 7 if ret_direction >= 7 else ret_direction
     ret_direction = -7 if ret_direction <= -7 else ret_direction
@@ -371,7 +367,7 @@ def return_road_direction(road_gradient):
 
 
 
-def find_nearest(array, value=315):
+def find_nearest(array, value=280):
     array = np.asarray(array)
     left_val = array[np.max(np.where(array <= value)[0])] if len(np.where(array <= value)[0]) != 0 else None
     right_val = array[np.min(np.where(array > value)[0])] if len(np.where(array > value)[0]) != 0 else None

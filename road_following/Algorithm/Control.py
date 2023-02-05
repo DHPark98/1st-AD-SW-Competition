@@ -27,17 +27,17 @@ def strengthen_control(road_direction, road_gradient, bottom_value): # 차선에
 
     # middle_threshold = (250, 280, 300, 310, 330, 340, 360, 390)
     road_weight = 1 - abs(road_direction) * 0.1
-    left_idx, right_idx = find_nearest(bottom_value)
-    print("left_idx : ", left_idx)
-    print("right_idx : ", right_idx)
+    left_idx, right_idx = find_nearest(bottom_value, middle_lane_offset)
+    # print("left_idx : ", left_idx)
+    # print("right_idx : ", right_idx)
     if left_idx == None or right_idx == None:
         if road_gradient < 0:
-            direction = -7
+            direction = -6
         else:
             direction = 7
     else:
         middle_lane = (left_idx + right_idx)/2
-        print("middle lane : ",middle_lane)
+        # print("middle lane : ",middle_lane)
 
         if middle_threshold[0] > middle_lane:
             direction = road_direction + road_bias[0] * road_weight
@@ -57,13 +57,16 @@ def strengthen_control(road_direction, road_gradient, bottom_value): # 차선에
             direction = road_direction + road_bias[7] * road_weight
         elif middle_threshold[7] <= middle_lane:
             direction = road_direction + road_bias[8] * road_weight
+
     
+    # print("gradient_direction : ", road_direction)
+    # print("bias_direction : ", direction - road_direction)
          
         
     direction = 7 if direction >= 7 else direction
     direction = -7 if direction <= -7 else direction
     
-    return int(direction)
+    return round(direction)
 
 def total_control(road_direction, model_direction, bottom_value, road_gradient):
     road_direction = strengthen_control(road_direction, road_gradient, bottom_value)
@@ -73,7 +76,7 @@ def total_control(road_direction, model_direction, bottom_value, road_gradient):
     return road_direction
 
 def smooth_direction(bef1, bef2, bef3, cur):
-    average = bef3 * 0.1 + bef2 * 0.2 + bef1 * 0.3 + cur * 0.4
+    average = bef3 * 0.05 + bef2 * 0.15 + bef1*0.3 + cur * 0.5
     return round(average)
 
 def moving_log(log): # road change to inside

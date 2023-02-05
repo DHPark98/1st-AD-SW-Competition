@@ -108,7 +108,7 @@ class DoWork:
             return False    
 
     def Driving(self):
-        bef_1d, bef_2d, bef_3d = 0,0,0
+        bef_1d, bef_2d, bef_3d= 0,0,0
         while True:
             try:
                 if self.front_camera_module == None:
@@ -118,13 +118,12 @@ class DoWork:
                 else:
                     cam_img = self.front_camera_module.read()
                     bird_img = bird_convert(cam_img, self.front_cam_name)
-                    cv2.imshow("bird", bird_img)
+                    # cv2.imshow("bird", bird_img)
                     preprocess_img = total_function(bird_img, self.driving_type)
                     binary_img = cvt_binary(bird_img, self.driving_type)
-                    roi_img = roi_cutting(binary_img)
+                    # roi_img = roi_cutting(binary_img)
                     
                     draw_img = cam_img.copy()
-                    outside = int(is_outside(preprocess_img))
 
                     
                     order_flag = 1
@@ -135,21 +134,25 @@ class DoWork:
                         pred = non_max_suppression(pred)[0]
                         
                         pred = distinguish_traffic_light(draw_img, pred)
-                        draw_img = show_bounding_box(draw_img, pred)
+                        # draw_img = show_bounding_box(draw_img, pred)
 
                         detect, order_flag, is_crosswalk = object_detection(pred)
 
                         if self.driving_type == "Time":
                             order_flag = 1
                     
-                    
+                    roi_img1 = roi_cutting(binary_img, 250)
+                    roi_img2 = roi_cutting(binary_img, 150)
+
                         
-                    road_gradient, bottom_value = dominant_gradient(roi_img)
+                    _, bottom_value = dominant_gradient(roi_img1)
+                    road_gradient, _ = dominant_gradient(roi_img2)
+
                     
 
                     if (road_gradient == None and bottom_value == None): # Gradient가 없을 경우 예외처리(Exception Image)
                         self.direction = 0
-                        message = 'a' + str(bef_1d) +  's' + str(self.speed) +'o' + str(outside)
+                        message = 'a' + str(bef_1d) +  's' + str(self.speed)
                         self.serial.write(message.encode())
                         print(message)
                         continue    
@@ -197,21 +200,20 @@ class DoWork:
                         avoidance_processor.action(is_outside(preprocess_img))
 
                     if self.speed != 0:
-                        if abs(self.direction) >= 5:
-                            self.speed -= 10 * (abs(self.direction) - 4)
-                        if self.direction >=4 and self.direction <=6:
-                            self.direction +=1
-                            self.speed -= 10
-                    message = 'a' + str(self.direction) +  's' + str(self.speed) + 'o' + str(outside)
+                        if abs(self.direction) >= 4:
+                            self.speed -= 30 * (abs(self.direction) - 4)
+                        # if self.direction >=4 and self.direction <=6:
+                        #     # self.direction +=1
+                        #     self.speed -= 20
+                    message = 'a' + str(self.direction) +  's' + str(self.speed)
                     self.serial.write(message.encode())
-                    print()
                     print(message)
                     
                     cv2.imshow('VideoCombined_detect', draw_img)
-                    cv2.imshow('VideoCombined_rf', roi_img)
+                    # cv2.imshow('VideoCombined_rf', roi_img)
                     cv2.imshow('VideoCombined_rf2', preprocess_img)
                     
-                    bef_1d, bef_2d, bef_3d = self.direction, bef_1d, bef_2d
+                    bef_1d, bef_2d, bef_3d = final_direction, bef_1d, bef_2d
                     pass
                 
             except Exception as e:
@@ -446,7 +448,7 @@ class DoWork:
 
                 
 
-                message = 'a' + str(self.direction) +  's' + str(self.parking_speed) +'o0'
+                message = 'a' + str(self.direction) +  's'
                 # print(message)
                 self.serial.write(message.encode())
                 
