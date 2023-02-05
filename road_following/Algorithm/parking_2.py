@@ -57,14 +57,14 @@ def stay_with_lidar(lidar_module, serial, speed, direction, rest_time = 1):
     while(end_time - start_time < rest_time):
         
         scan = np.array(lidar_module.iter_scans())
-        message = "a" + str(direction) + "s" + str(speed) + "o0"
+        message = "a" + str(direction) + "s" + str(speed)
         serial.write(message.encode())
         end_time = time.time()   
 
 def near_detect_car(lidar_module):
     scan = np.array(lidar_module.iter_scans())
     near_detect_condition = lidar_condition(-100, 100, 625, scan)
-    
+    print(scan[np.where(near_detect_condition)])
     if len(np.where(near_detect_condition)[0]):
         return True
     else:
@@ -79,9 +79,25 @@ def escape(lidar_module):
     else:
         return False
 
-def steering_parking(lidar_module, c):
+def steering_parking1(lidar_module, c):
     scan = np.array(lidar_module.iter_scans())
-    detect_condition = lidar_condition(-100, 100, 3000, scan)
+    detect_condition = lidar_condition(-100, 20, 2500, scan)
+    detect_scan = scan[np.where(detect_condition)]
+    steering_angle, distance_bias, c = parking_steering_angle(detect_scan, c)
+    # print(steering_angle)
+    f = lambda x : x**2 * (7/(600)**2) if x>0 else -1 * x**2 * (7/(600)**2)
+    direction = return_parking_direction(-1 * steering_angle) + int(f(distance_bias))
+    print("direction by gradient : ", return_parking_direction(-1 * steering_angle))
+    print("direction by distance : ", int(f(distance_bias)))
+    
+    direction = 7 if direction >= 7 else direction
+    direction = -7 if direction <= -7 else direction
+    print(direction)
+    return direction, c
+
+def steering_parking2(lidar_module, c):
+    scan = np.array(lidar_module.iter_scans())
+    detect_condition = lidar_condition(-100, 100, 2500, scan)
     detect_scan = scan[np.where(detect_condition)]
     steering_angle, distance_bias, c = parking_steering_angle(detect_scan, c)
     # print(steering_angle)
@@ -259,8 +275,8 @@ def stop(lidar_module, c):
 
 def search_left_right(lidar_module, c):
     scan = np.array(lidar_module.iter_scans())
-    left_condition = lidar_condition(-100, -90, 1000, scan)
-    right_condition = lidar_condition(90, 100, 1000, scan)
+    left_condition = lidar_condition(-100, -70, 1000, scan)
+    right_condition = lidar_condition(70, 100, 1000, scan)
     
     return detect_counting2(left_condition, right_condition, c)
     

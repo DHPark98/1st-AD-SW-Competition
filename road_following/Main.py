@@ -8,7 +8,10 @@ if __name__ == '__main__':
         if len(sys.argv) == 4:
             speed_value = sys.argv[3]
         elif len(sys.argv) == 3:
-            speed_value = 250
+            if sys.argv[2] == "Mission":
+                speed_value = 100
+            else:
+                speed_value = 250
         processor = process.DoWork(play_name = "Driving", front_cam_name = "FRONT", rear_cam_name = "REAR", 
                                    rf_weight_file= "./model_weight_file/best_steering_model_0116.pth", 
                                    detect_weight_file="./model_weight_file/yolo_final_weight.pt",

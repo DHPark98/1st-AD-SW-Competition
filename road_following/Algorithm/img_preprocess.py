@@ -26,13 +26,20 @@ def color_filter(image, driving_type):
     S[green_condition] = 100
     V[green_condition] = 100
     # white
-    V_white_condition = V>200 # 165
+    # day_evening = 200 #day
+    # day_evening = 180 #mid
+    day_evening = 165 #evening
+
+
+    V_white_condition = V>day_evening
+
     white_condition = V_white_condition
     H[V_white_condition] = 0
     S[V_white_condition] = 0
     V[V_white_condition] = 255
     # gray
-    V_gray_condition = (115<V) & (V<=200)#165)
+    V_gray_condition = (115<V) & (V<=day_evening)
+
     # S_gray_condition = S<25
     gray_condition = V_gray_condition #& S_gray_condition
     H[gray_condition] = 120
@@ -148,7 +155,7 @@ def hide_car_head(image):
     return car_hidden_img
 
 
-def total_function(image, driving_type):
+def total_function(image, driving_type = "Time"):
     image_blured = cv2.GaussianBlur(image, (0,0), 5)
     # image_blured = image
     if (0):
