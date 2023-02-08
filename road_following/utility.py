@@ -118,10 +118,20 @@ def center_inside(center):
     x = center[0]
     y = center[1]
     
-    if 70 < x and x < 570 and y > 160:
+    if 70 < x and x < 570 and y > 150:
         return True
     else:
         return False
+    
+def center_inside2(center):
+    x = center[0]
+    y = center[1]
+    
+    if 40 < x and x < 600 and y > 150:
+        return True
+    else:
+        return False
+
 
 
 def distinguish_traffic_light(image, pred):

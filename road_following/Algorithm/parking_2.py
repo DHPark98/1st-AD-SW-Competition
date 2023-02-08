@@ -15,7 +15,7 @@ def detect_parking_car(lidar_module, c):
     try:
         scan = np.array(lidar_module.iter_scans())
         # print(scan)
-        car_search_condition = lidar_condition(-90, -80, 2500, scan)
+        car_search_condition = lidar_condition(-90, -80, 3000, scan)
         print(scan[car_search_condition])
         c = detect_counting(car_search_condition, c)
         print(c.detect_cnt)
@@ -61,9 +61,9 @@ def stay_with_lidar(lidar_module, serial, speed, direction, rest_time = 1):
         serial.write(message.encode())
         end_time = time.time()   
 
-def near_detect_car(lidar_module):
+def near_detect_car(lidar_module, distance):
     scan = np.array(lidar_module.iter_scans())
-    near_detect_condition = lidar_condition(-100, 100, 625, scan)
+    near_detect_condition = lidar_condition(-100, 100, distance, scan) # 625, 725, 800
     print(scan[np.where(near_detect_condition)])
     if len(np.where(near_detect_condition)[0]):
         return True
@@ -79,9 +79,9 @@ def escape(lidar_module):
     else:
         return False
 
-def steering_parking1(lidar_module, c):
+def steering_parking(lidar_module, c, left_direction = 100):
     scan = np.array(lidar_module.iter_scans())
-    detect_condition = lidar_condition(-100, 20, 2500, scan)
+    detect_condition = lidar_condition(-100, left_direction, 3000, scan)
     detect_scan = scan[np.where(detect_condition)]
     steering_angle, distance_bias, c = parking_steering_angle(detect_scan, c)
     # print(steering_angle)
@@ -95,21 +95,6 @@ def steering_parking1(lidar_module, c):
     print(direction)
     return direction, c
 
-def steering_parking2(lidar_module, c):
-    scan = np.array(lidar_module.iter_scans())
-    detect_condition = lidar_condition(-100, 100, 2500, scan)
-    detect_scan = scan[np.where(detect_condition)]
-    steering_angle, distance_bias, c = parking_steering_angle(detect_scan, c)
-    # print(steering_angle)
-    f = lambda x : x**2 * (7/(600)**2) if x>0 else -1 * x**2 * (7/(600)**2)
-    direction = return_parking_direction(-1 * steering_angle) + int(f(distance_bias))
-    print("direction by gradient : ", return_parking_direction(-1 * steering_angle))
-    print("direction by distance : ", int(f(distance_bias)))
-    
-    direction = 7 if direction >= 7 else direction
-    direction = -7 if direction <= -7 else direction
-    print(direction)
-    return direction, c
 
 def rest(serial, sleep_time):
     message = 'a0s0o0'
@@ -165,7 +150,7 @@ def parking_steering_angle(scan, c, mode = 'angle'):
             
             if len(delta_angle) < 3:
                 print("Delta error")
-                return 0, c
+                return 0, 0, c
             # return
             print(c.total_array)
             print("steering angle : {}".format((c.total_array[ret_idx+1, 1] + c.total_array[ret_idx+2, 1])/2))
@@ -214,8 +199,8 @@ def calculate_distance(lidar_module):
         for i in range(5):
             scan = np.array(lidar_module.iter_scans())
 
-            right_condition = lidar_condition(-100, -70, 1500, scan)
-            left_condition = lidar_condition(70, 100, 1500, scan)
+            right_condition = lidar_condition(-100, -70, 2000, scan)
+            left_condition = lidar_condition(70, 100, 2000, scan)
 
             left_scan = scan[np.where(left_condition)]
             right_scan = scan[np.where(right_condition)]
@@ -275,8 +260,8 @@ def stop(lidar_module, c):
 
 def search_left_right(lidar_module, c):
     scan = np.array(lidar_module.iter_scans())
-    left_condition = lidar_condition(-100, -70, 1000, scan)
-    right_condition = lidar_condition(70, 100, 1000, scan)
+    left_condition = lidar_condition(-100, -70, 2000, scan)
+    right_condition = lidar_condition(70, 100, 2000, scan)
     
     return detect_counting2(left_condition, right_condition, c)
     
@@ -310,13 +295,13 @@ def escape_parking3(lidar_module, c):
 def detect_counting(condition1, c): # 3번 연속 detect 했을때 True return
     
     if len(np.where(condition1)[0]):
-        if c.detect_cnt < 3:
+        if c.detect_cnt < 5:
             c.detect_cnt += 1
     else:
         if c.detect_cnt > 0:
             c.detect_cnt -= 1
         
-    if c.detect_cnt == 3:
+    if c.detect_cnt == 5:
         c.flag = True
         return c
     elif c.detect_cnt == 0:
@@ -328,13 +313,13 @@ def detect_counting(condition1, c): # 3번 연속 detect 했을때 True return
 def detect_counting2(condition1, condition2, c): # 3번 연속 detect 했을때 True return
     
     if len(np.where(condition1)[0]) and len(np.where(condition2)[0]):
-        if c.detect_cnt < 3:
+        if c.detect_cnt < 5:
             c.detect_cnt += 1
     else:
         if c.detect_cnt > 0:
             c.detect_cnt -= 1
         
-    if c.detect_cnt == 3:
+    if c.detect_cnt == 5:
         c.flag = True
         return c
     elif c.detect_cnt == 0:

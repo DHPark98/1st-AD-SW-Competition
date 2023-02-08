@@ -7,7 +7,7 @@ image_width = 640
 image_height = 480
 direction_div = 12
 
-def color_filter(image, driving_type):
+def color_filter(image, day_evening, driving_type = "Time"):
     HSV_frame = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     H,S,V = cv2.split(HSV_frame)
     
@@ -28,7 +28,7 @@ def color_filter(image, driving_type):
     # white
     # day_evening = 200 #day
     # day_evening = 180 #mid
-    day_evening = 165 #evening
+    # day_evening = 165 #evening
 
 
     V_white_condition = V>day_evening
@@ -100,7 +100,6 @@ def only_stadium(image):    # 경기장 밖 지우는 함수
     satisfied = H_satisfied & S_satisfied & V_satisfied
     satisfied[:,639] = True
     check_top_green = len(np.where(satisfied[0])[0])
-    check_top_green
     
     first_green_x = np.argmax(satisfied, axis = 1).reshape(480, 1)
     green_left_x = first_green_x - 20
@@ -118,6 +117,23 @@ def only_stadium(image):    # 경기장 밖 지우는 함수
 
     HSV_frame[green_area] = [50, 100, 100]
     HSV_frame[white_area] = [0, 0, 255]
+
+
+
+    V_white_satisfied = V==255
+    satisfied = V_white_satisfied
+    satisfied[:,639] = True
+    
+    first_white_x =  np.argmax(satisfied, axis = 1).reshape(480, 1)
+    white_right_x = first_white_x + 15
+    #print(first_green_x)
+    x = np.linspace(0,639,640)
+    y = np.linspace(0,479,480)
+    X,Y = np.meshgrid(x,y)
+    
+    white_area = (X > first_white_x) & (X <= white_right_x)
+    HSV_frame[white_area] = [0, 0, 255]
+
 
     white_scene = np.ones((480,640))
     #cv2.imshow("satisfied", white_scene)
@@ -155,12 +171,12 @@ def hide_car_head(image):
     return car_hidden_img
 
 
-def total_function(image, driving_type = "Time"):
+def total_function(image, day_evening, driving_type = "Time"):
     image_blured = cv2.GaussianBlur(image, (0,0), 5)
     # image_blured = image
     if (0):
         image_blured = hide_car_head(image_blured)
-    image_filtered = color_filter(image_blured, driving_type)
+    image_filtered = color_filter(image_blured, day_evening, driving_type)
     image_no_black = remove_black(image_filtered)
     image_stadium = only_stadium(image_no_black)
     car_hidden = hide_car_head(image_stadium)
@@ -178,8 +194,7 @@ def total_function(image, driving_type = "Time"):
 
     return car_hidden 
 
-def cvt_binary(image, driving_type = "Time"):
-    transform_img = total_function(image, driving_type)
+def cvt_binary(transform_img): # input : preprocess image
     gray = cv2.cvtColor(transform_img, cv2.COLOR_BGR2GRAY)
     img_binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)[1]
     
