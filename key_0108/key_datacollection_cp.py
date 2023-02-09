@@ -88,7 +88,7 @@ def receive_from_Ard():     # Argument : ser ?
 if __name__ == '__main__':
 
     
-    path = '/home/skkcar/Desktop/contest/data_img/road_debugging/'     ###
+    path = '/home/skkcar/Desktop/contest/data_img/traffic_light_new/'     ###
 
     try:
         if not os.path.exists(path):
@@ -201,7 +201,7 @@ if __name__ == '__main__':
             detection_obj = "car"
             img_f_bird_title = "{0}f_bird--{1}--{2}--{3}".format(path, str(message), time_stamp, uuid_cur)
             yolo_title = "{}{}--{}".format(path, detection_obj, time_stamp)
-            cv2.imwrite(img_f_bird_title + ".png", bev)
+            cv2.imwrite(img_f_bird_title + ".png", img_f)
             
             time_prev_write = time.time()
 
