@@ -66,7 +66,7 @@ class DoWork:
         day 200, 190, 180, 170, 165, 155 evening
         """
         # Parking value
-        self.near_detect_value = 525
+        self.near_detect_value = 600
 
     def serial_start(self):
         try:
