@@ -241,18 +241,18 @@ def object_detection(pred): # pred 중 class별로 가장 큰 bbox return
     
     
     pred_array = [None, None, None, None] # 0:Crosswalk, 1:Green, 2:Red, 3:Car
-    bbox_threshold = [30000, 5000, 5000, 15000] # bbox area
+    bbox_threshold = [15000, 5000, 5000, 15000] # bbox area
     
     for *box, cf, cls in pred:
         bbox_area = box_area(box)
         
         cls = int(cls)
         
-        print("bbox area of {}: {}".format(cls, bbox_area))
+        #print("bbox area of {}: {}".format(cls, bbox_area))
         if cls == 0:
-            print("cross walk points : ", box)
+            #print("cross walk points : ", box)
             y2_crosswalk = int(box[3])
-            print("y2_cw : ", y2_crosswalk)
+            #print("y2_cw : ", y2_crosswalk)
         if bbox_area > bbox_threshold[cls] and cls != 3 : # find object
             if pred_array[cls] != None and box_area(pred_array[cls]) > bbox_area: 
                 pass
@@ -264,12 +264,12 @@ def object_detection(pred): # pred 중 class별로 가장 큰 bbox return
             pred_array[cls] = box
     if (pred_array[0] != None) and (pred_array[2] != None) and (y2_crosswalk > 430):    #and y2_crosswalk > 300
         order_flag = 0
-        print("over 430")
+        #print("over 430")
     elif pred_array[3] != None:
         order_flag = 2
     else:
         order_flag = 1
-    if (pred_array[0] != None) and (y2_crosswalk > 350):
+    if (pred_array[0] != None) and (y2_crosswalk > 330):
         is_crosswalk = True
     else:
         is_crosswalk = False

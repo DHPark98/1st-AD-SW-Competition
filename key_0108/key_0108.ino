@@ -10,9 +10,9 @@ const int front_echo = 46;
 const int front_trig = 47;
 
 //check variable resistance value!!!!!!!!!!!!!!!!!!!
-const int most_left = 878;
-const int most_right = 762;
-
+const int most_left = 874;
+const int most_right = 754;
+//check this too!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 const int set_init_steering = 1;
 
 

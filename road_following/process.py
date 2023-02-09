@@ -163,7 +163,7 @@ class DoWork:
                         self.direction = 0
                         message = 'a' + str(bef_1d) +  's' + str(self.speed)
                         self.serial.write(message.encode())
-                        print(message)
+                        #print(message)
                         continue    
                     if is_crosswalk == True:
                         day_evening = self.day_evening_value
@@ -177,7 +177,7 @@ class DoWork:
                             final_direction = int(box_control(detect[2]))
                         else:
                             final_direction = 0
-                        print(final_direction)
+                        #print(final_direction)
                     else:
                         
                         road_direction = return_road_direction(road_gradient)
@@ -194,11 +194,13 @@ class DoWork:
                     if order_flag == 0: # stop
                         self.direction = 0
                         self.speed = 0
+                        
                         pass
                     elif order_flag == 1: # go
                         # self.direction = final_direction
                         self.speed = self.speed_value
                         self.direction = smooth_direction(bef_1d, bef_2d, bef_3d, final_direction)
+                        # print("go")
                         pass
                     
                     elif order_flag == 2: # road change
@@ -208,17 +210,19 @@ class DoWork:
                                                         self.detect_weight_file, 50)
                         avoidance_processor.action(is_outside(preprocess_img), day_evening)
 
-                    if self.driving_type == "Time":
-                        if abs(self.direction) >= 4:
-                            self.speed -= 10 * (abs(self.direction) - 4)
+                    # if self.driving_type == "Time":
+                        # if abs(self.direction) >= 4:
+                            # self.speed -= 10 * (abs(self.direction) - 4)
+
+                    
                         # if self.direction >=4 and self.direction <=6:
                         #     # self.direction +=1
                         #     self.speed -= 20
                     message = 'a' + str(self.direction) +  's' + str(self.speed)
                     self.serial.write(message.encode())
-                    print(message)
+                    #print(message)
                     
-                    cv2.imshow('VideoCombined_detect', draw_img)
+                    # cv2.imshow('VideoCombined_detect', draw_img)
                     # cv2.imshow('VideoCombined_rf', roi_img)
                     cv2.imshow('VideoCombined_rf2', preprocess_img)
                     
